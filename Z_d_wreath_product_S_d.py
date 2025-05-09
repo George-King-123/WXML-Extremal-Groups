@@ -1,5 +1,5 @@
 from math import factorial
-from random import randint
+import random 
 from group_operations import op_wreath_prod
 from shared_code import compute_Sn, get_sparse_d_tuple
 from Z_d_product_Z_d import conjectured_gamma_k_n
@@ -22,6 +22,7 @@ def make_s_d(d:int):
   
   res = set()
   select([], res, {i for i in range (0, d)})
+  assert len(res) == factorial(d)
   return res 
 
 
@@ -29,28 +30,15 @@ def make_s_d(d:int):
 # the numbers in the first component are sparse and the 
 # permutations in the second component are random
 def get_rand_sparse_set(k, d):
-  s_d = list(make_s_d(d))
-
-  if len(s_d) != factorial(d):
-    raise ValueError("Something went horribly wrong")
-  
+  s_d = list(make_s_d(d))  
   S = set()
   
   # add something to the set k times 
   for _ in range(0, k):
-    rand_s_d_elt = s_d[randint(0, factorial(d) - 1)]
+    rand_s_d_elt = s_d[random.randrange(factorial(d))]
     S.add((get_sparse_d_tuple(d), rand_s_d_elt))
   
   return S
-
-
-def test(k, n, d):
-  S = get_rand_sparse_set(k=k, d=d)
-  print(S)
-
-  s_n = compute_Sn(S=S, n=n, group_op=op_wreath_prod)
-  print(len(s_n))
-
 
 # ex: compare_many_vals(d = 3, fixed_k = 4, n_lower = 10, n_upper = 25)
 def compare_many_vals(d, n_lower, n_upper, fixed_k):
@@ -63,7 +51,6 @@ def compare_many_vals(d, n_lower, n_upper, fixed_k):
     z_d_val = conjectured_gamma_k_n(k=fixed_k, n=n, d=d)
     s_d_val = len(compute_Sn(S=S, n=n, group_op=op_wreath_prod))
     print("for n = {}, Z_d was {} and S_d was {}, ratio S_d/Z_d is {}".format(n, z_d_val, s_d_val, s_d_val/z_d_val))
-
 
 
 # try num_iters different sets S with cardinality k, 
@@ -120,13 +107,6 @@ def find_a_good_set(d, k, n, num_iters):
   #print(sorted(prs))
   print_second_components(best_set)
 
-
-
-#find_a_good_set(d = 3, k = 3, n = 15, num_iters=10)
-
-
-compute_approx_gamma_k_n(k = 3, n = 8, d = 3, num_iters = 20, noisy = True)
-
 def something(n_l, n_h, k_l, k_h, d, num_iters):
   for k in range (k_l, k_h + 1):
     for n in range(n_l, n_h + 1):
@@ -135,4 +115,5 @@ def something(n_l, n_h, k_l, k_h, d, num_iters):
 
       print("n = {}, k = {}, s_d/n^(d(k-1)) = {}".format(n, k, z_d/(n**(d*(k-1)))))
 
-#something(5, 10, 2, 6, 3, 15)
+if __name__ == "__main__":
+  pass

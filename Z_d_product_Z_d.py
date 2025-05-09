@@ -92,3 +92,29 @@ def exponent(n, k, d):
   
   print("Conjecture:")
   print(1/(factorial(d*(k - 1))))
+
+
+
+# we are interested in \lim_{n \to \infty} formula(t, d, k, n) / n^{d(k-1)} 
+def predicted_limit(k, t, d):
+    numerator = factorial(d * (t - 1))
+    denominator = ((factorial(t - 1)) ** d) * (d ** (d * (t - 1))) * factorial(d * (k - 1))
+    return numerator / denominator
+
+def test_predicted_limit(big_number, k, t, d):
+    numerical_approx_of_limit = formula_when_all_one(n=big_number, k=k, t=t, d=d) / big_number ** (d * (k - 1))
+    print(f"Numerical approximation of limit: {numerical_approx_of_limit}")
+    predicted = predicted_limit(k, t, d)
+    print(f"Predicted limit: {predicted}")
+
+    print(f"Difference: {abs(numerical_approx_of_limit - predicted)}")
+
+def find_best_t_val_limit(k, d):
+    return max(range(1, k+1), key=lambda t: predicted_limit(k, t, d))
+
+def main():
+  # test_predicted_limit(big_number= 10 ** 6, k=10, t=4, d=7)
+  print(find_best_t_val_limit(k=20, d=2))
+
+if __name__ == "__main__":
+  main()
