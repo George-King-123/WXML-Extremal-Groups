@@ -1,5 +1,5 @@
-from Old.D_infinity import compute_s_n_with_formula
-import openpyxl
+from D_infinity import compute_s_n_with_formula
+# import openpyxl
 
 # verifies the formula for D_infinity given in the main file, checking
 # all values of n, k up to the given upper bounds and all values of t 
@@ -10,7 +10,7 @@ def run_check_on_formula(n_upper, k_upper):
   def formula_works(n, k, t):
     formula = compute_s_n_with_formula(n, k, t)
     empirical = compute_size_s_n_simulation(n, k, t)
-    return formula == empirical
+    return formula == empirical 
 
   for n in range(1, n_upper + 1):
     for k in range(1, k_upper + 1):
@@ -101,3 +101,8 @@ def run_simulation(S, n, k):
 def compute_size_s_n_simulation(n, k, num_neg):
   S = [1 for i in range (num_neg, k)] + [-1 for i in range(0, num_neg)]
   return len(run_simulation(S, n, k))
+
+
+if __name__ == "__main__":
+  run_check_on_formula(n_upper = 8, k_upper = 8)
+

@@ -1,11 +1,8 @@
-from math import factorial
+from math import factorial, comb
 import random 
 from group_operations import op_wreath_prod
 from shared_code import compute_Sn, get_sparse_d_tuple
-from Z_d_product_Z_d import conjectured_gamma_k_n
-
-# This file is less well documented than the others, be advised
-
+import itertools
 
 # returns a set of all tuples of length d having elements in
 # {0, 1, ..., d-1} representing bijections
@@ -40,19 +37,6 @@ def get_rand_sparse_set(k, d):
   
   return S
 
-# ex: compare_many_vals(d = 3, fixed_k = 4, n_lower = 10, n_upper = 25)
-def compare_many_vals(d, n_lower, n_upper, fixed_k):
-  S = get_rand_sparse_set(k=fixed_k, d=d)
-
-  print_second_components(S)
-
-  print("k = {}".format(fixed_k))
-  for n in range (n_lower, n_upper + 1):
-    z_d_val = conjectured_gamma_k_n(k=fixed_k, n=n, d=d)
-    s_d_val = len(compute_Sn(S=S, n=n, group_op=op_wreath_prod))
-    print("for n = {}, Z_d was {} and S_d was {}, ratio S_d/Z_d is {}".format(n, z_d_val, s_d_val, s_d_val/z_d_val))
-
-
 # try num_iters different sets S with cardinality k, 
 # compute |S^n| for each and take the max
 # ex: compute_approx_gamma_k_n(k = 3, n = 8, d = 3, num_iters = 20, noisy = True)
@@ -68,52 +52,118 @@ def compute_approx_gamma_k_n(k, n, d, num_iters, noisy = False):
       best_set = S 
   
   if noisy:
-    print("for n = {}, k = {}, d = {}".format(n, k, d) + 
-          " trying {} different sets we get a value ".format(num_iters) +
-           "of {}".format(best))
+    print(f"Best value after trying {num_iters} sets: {best:_}")
     print("The best set had these 2nd components:")
     print_second_components(best_set)
 
   return best
 
-
 # just print the second component, we know the first component is d sparse integers
 def print_second_components(S):
   print([elt[1] for elt in S])
 
-def find_a_good_set(d, k, n, num_iters):
-  best_set = set()
-  best_val = 0
-  prs = []
-
-  value_set = set()
-
-  for _ in range(0, num_iters):
-    S = get_rand_sparse_set(k=k, d=d)
-
-    num_distinct_second_components = len({elt[1] for elt in S})
-    cur_val = len(compute_Sn(S = S, n = n, group_op= op_wreath_prod)) 
+# return the set mentioned in the paper, with identity in the second component except for (12) and (123...d)
+def get_paper_set(k, d):
+    perm_id = tuple([i for i in range(0, d)])
+    perm_12 = tuple([1, 0] + list(range(2, d))) 
+    perm_cyc = tuple([i + 1 for i in range(0, d - 1)] + [0])
     
-    value_set.add(cur_val)
-    prs.append((cur_val, num_distinct_second_components))
+    S = set()
+    for i in range(0, k - 2):
+        S.add((get_sparse_d_tuple(d), perm_id))
+    S.add((get_sparse_d_tuple(d), perm_12))
+    S.add((get_sparse_d_tuple(d), perm_cyc))
+    return S
 
-    #print("With {} 2nd components we got {}".format(num_distinct_second_components, cur_val))
-    if cur_val > best_val:
-      best_set = S 
-      best_val = cur_val 
+def compute_Sn_paper_set(n, k, d):
+    S = get_paper_set(k, d)
+    s_n = compute_Sn(S, n, op_wreath_prod)
+    return len(s_n)
 
-  print("we got {} different values".format(len(value_set)))
-  print(best_val)
-  #print(sorted(prs))
-  print_second_components(best_set)
+# h_n(r) is the number of n \times n magic squares with sum r, as defined in the overleaf
+def h_3(r):
+    return (r+1) * (r+2) * (r**2 + 3*r + 4) // 8
 
-def something(n_l, n_h, k_l, k_h, d, num_iters):
-  for k in range (k_l, k_h + 1):
-    for n in range(n_l, n_h + 1):
-      s_d = compute_approx_gamma_k_n(k=k, n=n, d=d, num_iters=num_iters)
-      z_d = conjectured_gamma_k_n(k=k, n=n, d=d)
+# f_d(k, n) = \sum_{x \in \WC(n, k)} \prod_{i=1}^{k} h_d(x_i) 
+def f_3(k, n):
+    WC_n_k = WC(n, k)
+    tot = 0
+    for x in WC_n_k:
+        prod = 1 
+        for i in range(0, k):
+            prod *= h_3(x[i])
+        tot += prod
+    
+    return tot
 
-      print("n = {}, k = {}, s_d/n^(d(k-1)) = {}".format(n, k, z_d/(n**(d*(k-1)))))
+def WC_generator(n, k):
+  if k <= 0 or n < 0:
+     raise ValueError()
+  
+  for bars in itertools.combinations(range(n + k - 1), k - 1):
+      result = []
+      prev = -1
+      for b in bars:
+          result.append(b - prev - 1)
+          prev = b
+      result.append(n + k - 1 - prev - 1)
+      yield result
 
-if __name__ == "__main__":
-  pass
+def WC(n, k):    
+  wc = list(WC_generator(n, k)) 
+  assert len(wc) == comb(n + k - 1, k - 1) 
+  assert all(sum(x) == n for x in wc)
+  assert all(len(x) == k for x in wc)
+  return wc
+
+def lower_bound_3(k, n):
+  tot = 0
+  C_3 = 6
+  for i in range(C_3, n):
+     tot += (f_3(k-2, n-i) * (i - C_3 + 1))
+  return tot
+
+def see_how_tight_bounds_are():
+  k=3
+  n=15
+  d=3
+  print(f"Upper bound: f_3(k, n) = {f_3(k, n):_}")
+  print(f"Lower bound: {lower_bound_3(k,n):_}")
+  print(f"S^n paper set: {compute_Sn_paper_set(n=n, k=k, d=d):_}")
+  compute_approx_gamma_k_n(k = k, n = n, d = d, num_iters = 100, noisy = True)
+
+def experiment_with_d_3_bounds(): 
+  
+  def upper_bound(k, n):
+    return f_3(k, n)
+  
+  K = 6
+  N = 70
+
+  print(f"k = {K}, n = {N}")
+
+  upper = upper_bound(K, N)
+  lower = lower_bound_3(K, N)
+
+  print(f"Quotient of bounds: {(upper/lower):_}")
+
+def print_s_n_paper_set():
+  k = 4
+  n = 15
+  d = 3
+
+  print(f"Upper bound: f_3(k, n) = {f_3(k, n):_}")
+  print(f"Lower bound = {lower_bound_3(k,n):_}")
+  print(f"S^n paper set: {compute_Sn_paper_set(n=n, k=k, d=d):_}")
+
+def main():
+  #  experiment_with_d_3_bounds()
+  # print_s_n_paper_set()
+  # see_how_tight_bounds_are()
+  
+  k = 4
+  for n in range(10, 2000, 50):
+    print(lower_bound_3(k, n) / (n ** (5 * k - 9)))
+
+if __name__ == "__main__": 
+    main()

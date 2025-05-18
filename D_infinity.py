@@ -32,81 +32,56 @@ def compute_s_n_with_formula(n, k, t):
       return 1
     return comb_original(n, k)
 
-  def zero_case(k, n, t):
+  def I_0(t, k, n):
     return comb(n + (k - t) - 1, (k - t) - 1)
 
-  def one_case(k, n, t):
+  # returns I_1(t, k, n)
+  def I_1(t, k, n):
     res = 0
     for q in range (1, min(k-t, n-1) + 1):
       res += pow(2, q)*comb(k-t, q)*comb(n-2, q-1)
     res *= t
     return res
 
-  def extra_two_case(k, n, t):
+  # returns I_2(t, k, n)
+  def I_2(t, k, n):
     res = 0
     for q in range (1, min(k-t, n-2) + 1):
       res += (pow(2, q) - 1) * comb(k-t, q) * comb(n-3, q-1) 
     # res *= t
     return res
 
-  # closed form for |S^n|-|S^n-2| when |S| = k and S has one element with a minus sign
-  def conj_one_sign_recurrence(k, n):
-    return zero_case(k, n, 1) + one_case(k, n, 1) + extra_two_case(k, n, 1)
+  # returns R(t, k, n)
+  def R(t, k, n): 
+    if t in {0, 1}: 
+      return 0
 
-  # closed form for |S^n|-|S^n-2| when |S| = k and S has two elements with a minus sign
-  def conj_two_sign_recurrence(k, n):
-    res = zero_case(k, n, 2) + one_case(k, n, 2) + extra_two_case(k, n, 2)
-    for i in range(2, n + 1):
-      omega_value = 0
-      if i == n: # note: when i = n, want the first summation to be 1
-        omega_value = 1
-      for q in range (1, min(k - 2, n - i) + 1):
-        omega_value += (pow(2, q)) * comb(k - 2, q) * comb(n - i - 1, q - 1)
-      res += omega_value * 2 # only 2 placements for sigma terms
-    return res
-    
-  # for t > 1
-  def conj_recurrence(k, n, t):
-    res = zero_case(k, n, t) + one_case(k, n, t) + extra_two_case(k, n, t)
+    res = 0
     for i in range(2, n + 1):
       omega_value = 0
       sigma_value = 0
       for q in range (1, min(k - t, n - i) + 1):
-        omega_value += (pow(2, q)) * comb(k-t, q) * comb(n-i - 1, q-1)
+        omega_value += (pow(2, q)) * comb(k-t, q) * comb(n-i -1, q-1)
+
       for m in range (1, min(t-1, ceil(i / 2)) + 1):
         sigma_value += comb(t, m) * comb(ceil(i / 2) - 1, m - 1) * comb((t-m) + floor(i / 2) - 1, (t - m) - 1)
+      
       if i == n: # note: when i = n, want the first summation to be 1
         omega_value = 1
-      res += omega_value * sigma_value
+      res += (omega_value * sigma_value)
     return res
 
   if t == 0:
     return comb(n + k - 1, k - 1)
   
-  # set up for the even case
-  acc = 1
-  cur = 2
+  # set up for the even or odd case
+  acc = 1 if n % 2 == 0 else k
+  cur = 2 if n % 2 == 0 else 3
 
-  # change for the odd case
-  if n % 2 == 1:
-    acc = k
-    cur = 3
-
-  if t == 1:
-    while cur <= n:
-      acc += conj_one_sign_recurrence(k, cur)
-      cur += 2
-    return acc
-  elif t == 2:
-    while cur <= n:
-      acc += conj_two_sign_recurrence(k, cur)
-      cur += 2
-    return acc
-  else:
-    while cur <= n:
-      acc += conj_recurrence(k, cur, t)
-      cur += 2
-    return acc
+  while cur <= n: 
+    acc += I_0(t, k, cur) + I_1(t, k, cur) + I_2(t, k, cur) + R(t, k, cur)
+    cur += 2
+  return acc
   
 
 
@@ -192,7 +167,30 @@ def check_abelian_generating_function(nupper, kupper, xval, yval):
   print("Summing terms gets {}".format(term_sum))
   print("Evaluating 1/(1-x-y) gets {}".format(direct_eval))
 
-check_generating_function(20, 20, .1, .1)
 
+def check_limits_with_dif_t_vals(): 
+  t = 14
+  k = 14
+  N = 10000
+  s_n = compute_s_n_with_formula(N, k, t)
+  quotient = s_n / (N**(k-1))
+  conj_limit = 2**(k - 2 * t + 1) * comb_original(2 * t - 2, t- 1) / factorial(k - 1)
+  
+  print(f"{conj_limit = }")
+  print(f"{quotient = }")
 
+def gamma_n_n_limit():
+  N = 400
+  alpha = .7
+  t = round(N * alpha)
+  s_n = compute_s_n_with_formula(N, N, t)
+  conj_limit = 3 + 2 * sqrt(2)  
+  emprirical_limit = s_n**(1/N) 
+  print(f"{conj_limit = }")
+  print(f"{emprirical_limit = }")
 
+def main():
+  gamma_n_n_limit() 
+
+if __name__ == "__main__":
+  main()
