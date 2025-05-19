@@ -1,4 +1,4 @@
-from D_infinity import compute_s_n_with_formula
+from D_infinity import compute_s_n_with_formula_OLD_FORM, compute_s_n_new_formula
 # import openpyxl
 
 # verifies the formula for D_infinity given in the main file, checking
@@ -6,20 +6,32 @@ from D_infinity import compute_s_n_with_formula
 # up to each k. 
 # Since this actually runs the simulation, numbers need to be small e.g.
 # run_check_on_formula(7, 7)
-def run_check_on_formula(n_upper, k_upper):
+def run_check_on_formula(n_upper, k_upper, formula_fcn, noisy = False):
   def formula_works(n, k, t):
-    formula = compute_s_n_with_formula(n, k, t)
+    formula = formula_fcn(n, k, t)
     empirical = compute_size_s_n_simulation(n, k, t)
+    
+    if noisy:
+      if formula != empirical:
+        print(f"formula = {formula:_}, empirical = {empirical:_}")
+        print("formula doesn't work for n = {}, k = {}, t = {}".format(n, k, t))
+        print()
+      else: 
+        print(f"formula works for n = {n}, k = {k}, t = {t}")
+   
     return formula == empirical 
 
+  works_on_all = True
   for n in range(1, n_upper + 1):
     for k in range(1, k_upper + 1):
       for t in range(0, k + 1):
         if not formula_works(n, k, t):
-          print("formula doesn't work for n = {}, k = {}, t = {}".format(n, k, t))
-          return
+          works_on_all = False 
   
-  print("Formula worked on all values")
+  if works_on_all:
+    print("Formula worked on all values")
+  else:
+    print("formula failed, re-run with noisy if no other output")
 
 
 # used to make the table I uploaded to the latex document that shows the 
@@ -50,7 +62,7 @@ def maximize_signs_excel_file(n_upper, k_upper, filename):
     achieved_at = 0
     tie_list = []
     for t in range(0, k + 1):
-      val = compute_s_n_with_formula(n, k, t)
+      val = compute_s_n_with_formula_OLD_FORM(n, k, t)
       if val > biggest:
         biggest = val
         achieved_at = t
@@ -104,5 +116,6 @@ def compute_size_s_n_simulation(n, k, num_neg):
 
 
 if __name__ == "__main__":
-  run_check_on_formula(n_upper = 8, k_upper = 8)
+  # run_check_on_formula(n_upper = 8, k_upper = 8, formula_fcn=compute_s_n_with_formula_OLD_FORM)
+  run_check_on_formula(n_upper = 8, k_upper = 8, formula_fcn=compute_s_n_new_formula, noisy=True)
 

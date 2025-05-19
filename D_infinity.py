@@ -10,7 +10,7 @@ def gamma_D_inf(n, k, noisy = False):
   biggest = -1
   achieved_at = 0
   for t in range(0, k + 1):
-    val = compute_s_n_with_formula(n, k, t)
+    val = compute_s_n_with_formula_OLD_FORM(n, k, t)
     if val > biggest:
       biggest = val
       achieved_at = t
@@ -20,9 +20,59 @@ def gamma_D_inf(n, k, noisy = False):
 
   return biggest 
 
+
+def compute_s_n_new_formula(n, k, t):
+  def comb(n, k):
+    if (k > n):
+      return 0
+    if (k < 0 or n < 0):
+      return 0
+    if (k == 0):
+      return 1
+    return comb_original(n, k)
+  
+  def rangeIncl(start, end):
+    return range(start, end + 1)
+
+  if t == 0: 
+    return comb(n + k - 1, k - 1)
+  elif t == 1: 
+    res = 0 
+    for q in range(1, min(k-1, n-1) + 1):
+      res += pow(2, q) * comb(k-1, q) * comb(n-1, q)
+    return res + comb(n + k - 2, k - 2) + 1
+  elif t < k:
+    res = 0 
+    for p in rangeIncl(1, min(t-1, n)):
+      for ell in rangeIncl(p, n):
+        for q in rangeIncl(0, min(k-t, n-ell)):
+          for i in rangeIncl(q, n-ell):
+            if (n - ell - i) % 2 != 0:
+              continue 
+            res += comb(t, p) * comb(ceil(ell/2)-1, p-1) * comb(floor(ell/2) + t - p - 1, t-p-1) * (2**q) * comb(k-t, q) * comb(i-1, q-1)
+ 
+    # + .... -
+    for q in rangeIncl(1, min(k-t, n-2)):
+      for i in rangeIncl(q-1, n-2):
+        if (n-i) % 2 != 0: 
+          continue
+        res += (2**q) * comb(k-t, q) * comb(i-1, q-1) 
+
+    return res + comb(n + k - t - 1, k - t - 1)
+  elif t == k: 
+    res = 0 
+    for p in rangeIncl(1, min(t-1, n)):
+      for c in rangeIncl(0, floor(n-p/2)):
+        res += comb(t, p) * comb(ceil(n/2 - c) - 1, p-1) * comb(floor(n/2 -c) + t-p-1, t-p-1)
+    return res + (1 if n % 2 == 0 else 0) 
+
+  else:
+    raise Exception("t > k")
+
+
 # computes |S^n| when |S| = k and there are t negative signs in S
 # works for k >= 1, n >= 1
-def compute_s_n_with_formula(n, k, t):
+def compute_s_n_with_formula_OLD_FORM(n, k, t, noisy = False):
   def comb(n, k):
     if (k > n):
       return 0
@@ -75,13 +125,26 @@ def compute_s_n_with_formula(n, k, t):
     return comb(n + k - 1, k - 1)
   
   # set up for the even or odd case
-  acc = 1 if n % 2 == 0 else k
+  start = 1 if n % 2 == 0 else k
   cur = 2 if n % 2 == 0 else 3
 
+  tot_I_0_contrib = 0 
+  tot_I_1_contrib = 0
+  tot_I_2_contrib = 0
+  tot_R_contrib = 0
+
   while cur <= n: 
-    acc += I_0(t, k, cur) + I_1(t, k, cur) + I_2(t, k, cur) + R(t, k, cur)
+    tot_I_0_contrib += I_0(t, k, cur)
+    tot_I_1_contrib += I_1(t, k, cur)
+    tot_I_2_contrib += I_2(t, k, cur)
+    tot_R_contrib += R(t, k, cur)
     cur += 2
-  return acc
+
+  total = tot_I_0_contrib + tot_I_1_contrib + tot_I_2_contrib + tot_R_contrib + start
+  if noisy:
+    print(f"I_0: {round(tot_I_0_contrib/total, 4)}, I_1: {round(tot_I_1_contrib/total, 4)}, I_2: {round(tot_I_2_contrib/total, 4)}, R: {round(tot_R_contrib/total, 4)}")
+  
+  return total
   
 
 
@@ -93,7 +156,7 @@ def compute_s_n_with_formula(n, k, t):
 # so I only check one sign
 # ex: growth_rate_one_sign_assumption(50, 10000)
 def growth_rate_one_sign_assumption(small_k, large_n):
-  val = compute_s_n_with_formula(n = large_n, k = small_k, t = 1)
+  val = compute_s_n_with_formula_OLD_FORM(n = large_n, k = small_k, t = 1)
   theta_bound = large_n**(small_k - 1)
   print("Actual ratio: {}".format(val/theta_bound))
 
@@ -108,7 +171,7 @@ def growth_rate_one_sign_assumption(small_k, large_n):
 # ex: gamma_n_n_exponent_two_sign_assumption(200)
 # see the old files for tests of two vs three signs and other nonsense functions
 def gamma_n_n_exponent_two_sign_assumption(n):
-  val = compute_s_n_with_formula(n, n, 2)
+  val = compute_s_n_with_formula_OLD_FORM(n, n, 2)
   experimental = val ** (1/n)
   print("experimental: {}".format(experimental))
 
@@ -171,8 +234,8 @@ def check_abelian_generating_function(nupper, kupper, xval, yval):
 def check_limits_with_dif_t_vals(): 
   t = 14
   k = 14
-  N = 10000
-  s_n = compute_s_n_with_formula(N, k, t)
+  N = 1000
+  s_n = compute_s_n_with_formula_OLD_FORM(N, k, t)
   quotient = s_n / (N**(k-1))
   conj_limit = 2**(k - 2 * t + 1) * comb_original(2 * t - 2, t- 1) / factorial(k - 1)
   
@@ -183,14 +246,14 @@ def gamma_n_n_limit():
   N = 400
   alpha = .7
   t = round(N * alpha)
-  s_n = compute_s_n_with_formula(N, N, t)
+  s_n = compute_s_n_with_formula_OLD_FORM(N, N, t)
   conj_limit = 3 + 2 * sqrt(2)  
   emprirical_limit = s_n**(1/N) 
   print(f"{conj_limit = }")
   print(f"{emprirical_limit = }")
 
 def main():
-  gamma_n_n_limit() 
+  compute_s_n_with_formula_OLD_FORM(2000, 10, 2, True)
 
 if __name__ == "__main__":
   main()

@@ -1,4 +1,4 @@
-from D_infinity import compute_s_n_with_formula
+from D_infinity import compute_s_n_with_formula_OLD_FORM
 import openpyxl
 
 # verifies the formula for D_infinity given in the main file, checking
@@ -8,7 +8,7 @@ import openpyxl
 # run_check_on_formula(7, 7)
 def run_check_on_formula(n_upper, k_upper):
   def formula_works(n, k, t):
-    formula = compute_s_n_with_formula(n, k, t)
+    formula = compute_s_n_with_formula_OLD_FORM(n, k, t)
     empirical = compute_size_s_n_simulation(n, k, t)
     return formula == empirical
 
@@ -50,7 +50,7 @@ def maximize_signs_excel_file(n_upper, k_upper, filename):
     achieved_at = 0
     tie_list = []
     for t in range(0, k + 1):
-      val = compute_s_n_with_formula(n, k, t)
+      val = compute_s_n_with_formula_OLD_FORM(n, k, t)
       if val > biggest:
         biggest = val
         achieved_at = t
