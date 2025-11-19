@@ -1,8 +1,10 @@
 from random import randint
 
-BIG_NUM = 1000000000
+def incl_range(start, end):
+  return range(start, end+1)
 
 def get_sparse_d_tuple(d):
+    BIG_NUM = 1000000000
     return tuple([randint(0, BIG_NUM) for _ in range(0, d)])
 
 def compute_Sn(S, n, group_op):

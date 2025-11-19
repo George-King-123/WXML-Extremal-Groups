@@ -1,4 +1,5 @@
 from math import floor, ceil, factorial, sqrt, comb as comb_original
+from shared_code import incl_range
 
 def comb(n, k):
   if (k > n):
@@ -37,8 +38,7 @@ def compute_s_n_new_form(n, k, t):
     def term(r):
       return comb_original(x, r) * comb_original(y//2 - 1, r-1) * comb_original(ceil(y/2) + x - r - 1, x - r - 1)
 
-    summation_upper_bound = min(x-1, y//2)
-    return sum(term(r) for r in range(1, summation_upper_bound + 1))
+    return sum(term(r) for r in incl_range(1, min(x-1, y//2)))
 
 
   def N(x, y):
@@ -48,8 +48,7 @@ def compute_s_n_new_form(n, k, t):
     def term(s):
       return (2**s) * comb_original(x, s) * comb_original(y-1, s-1)
     
-    summation_upper_bound = min(x, y)
-    return sum(term(s) for s in range(1, summation_upper_bound + 1))
+    return sum(term(s) for s in incl_range(1, min(x, y)))
   
 
   lone_binomial = comb(n + k - t - 1, k - t - 1)
@@ -57,9 +56,9 @@ def compute_s_n_new_form(n, k, t):
   
   def second_sum(): 
     def inner_sum(ell):
-      return sum(R(t, q) * N(k-t, ell - q) for q in range(1, ell + 1))
+      return sum(R(t, q) * N(k-t, ell - q) for q in incl_range(1, ell))
 
-    return sum(inner_sum(ell) for ell in range(1, n + 1) if n % 2 == ell % 2)
+    return sum(inner_sum(ell) for ell in incl_range(1, n) if n % 2 == ell % 2)
 
   return lone_binomial + first_sum + second_sum()
 
@@ -164,38 +163,7 @@ def gamma_n_n_exponent_two_sign_assumption(n):
   conjecture = 3 + 2 * sqrt(2)
   print("conjecture: {}".format(conjecture))
 
-# compute partial sums of the generating function up to the given upper bounds, 
-# evaluating at the given x and y values
-def check_generating_function(nupper, kupper, xval, yval):
-  def sum_terms():
-    sum = 0
-    for k in range(2, kupper + 1):
-      for n in range(0, nupper + 1):
-        sum += gamma_D_inf(n = n, k = k) * (xval)**n * (yval)**k
-    return sum
-
-  # the generating function for the abelian case is 1/(1 - x - y)
-  def A_0(x, y):
-    return y**2/(1-x-y)
-  
-  def A_1(x, y):
-    return x * y - (y**2)/((1 - x - y - x * y) * (1 - x))
-  
-  def A_2(x, y):
-    return x * A_1(x, y)
-  
-  def g(x, y):
-    return A_0(x, y) + A_1(x, y) + A_2(x, y)
-  
-  term_sum = sum_terms()
-  direct_eval = g(xval, yval)
-
-  print("Summing terms gets {}".format(term_sum))
-  print("Evaluating generating function gets {}".format(direct_eval))
-
-
-
-def check_new_form_matches_old(N = 20, k = 20, noisy = True): 
+def check_new_form_matches_old(N = 30, k = 30, noisy = True): 
   for n in range(1, N + 1):
     for k in range(1, n + 1):
       for t in range(1, k+1): 
@@ -204,29 +172,6 @@ def check_new_form_matches_old(N = 20, k = 20, noisy = True):
         if noisy: 
           print(f"{new=} {old=}")
         assert new == old 
-
-
-# this is for a gut check that the function above is a reasonable way to check generating functions
-# of course, xval and yval need to be small so that it converges
-# ex: check_abelian_generating_function(30, 30, .1, .1)
-def check_abelian_generating_function(nupper, kupper, xval, yval):
-  def sum_terms():
-    sum = 0
-    for k in range(1, kupper + 1):
-      for n in range(0, nupper + 1):
-        sum += comb_original(n + k - 1, k - 1) * (xval)**n * (yval)**k
-    return sum 
-  
-  # the generating function for the abelian case is 1/(1 - x - y)
-  def g(x, y):
-    return 1/(1-x-y)
-  
-  term_sum = sum_terms()
-  direct_eval = g(xval, yval)
-
-  print("Summing terms gets {}".format(term_sum))
-  print("Evaluating 1/(1-x-y) gets {}".format(direct_eval))
-
 
 def check_limits_with_dif_t_vals(): 
   t = 14
