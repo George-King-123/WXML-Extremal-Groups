@@ -15,7 +15,7 @@ def choose(n, k):
   return choose_built_in(n, k)
 
 def format_large_num(num): 
-  return f"{num:,}"
+  return f"{num:_}"
 
 def incl_range(start, end):
   return range(start, end+1)

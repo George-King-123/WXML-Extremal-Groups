@@ -1,8 +1,15 @@
-from math import floor, ceil, factorial, sqrt
+# run with python -m D_infinity.compute_s_n
+
+from math import floor, ceil
 from shared_code import incl_range, format_large_num, choose, big_rand_num, compute_Sn
 import group_operations
+from tqdm import tqdm as loading_bar
+import random
 
-def compute_s_n_new_form(n, k, t): 
+def new_formula(n, k, t): 
+  if t == 0: 
+    return choose(n + k - 1, k - 1)
+
   def R(x, y): 
     if y == 1: 
       return x 
@@ -33,7 +40,7 @@ def compute_s_n_new_form(n, k, t):
 
   return lone_binomial + first_sum + second_sum()
 
-def compute_s_n_old_form(n, k, t):
+def old_formula(n, k, t):
   def I_0(t, k, n):
     return choose(n + (k - t) - 1, (k - t) - 1)
 
@@ -92,7 +99,7 @@ def compute_s_n_old_form(n, k, t):
   
   return total
 
-def compute_s_n_function_simulation(n, k, t): 
+def function_simulation(n, k, t): 
   def run_simulation(S, n, k):
 
     def compute_one_more(cur_tuple, last_fcn_value, S):
@@ -122,79 +129,85 @@ def compute_s_n_function_simulation(n, k, t):
   S =  [-1] * t + [1] * (k-t)
   return len(run_simulation(S, n, k))
 
-def compute_s_n_direct_simulation(n, k, t): 
+def direct_simulation(n, k, t): 
   def get_S(t):
     first_components = [big_rand_num() for _ in range(k)]
     second_components = [-1] * t + [1] * (k-t)
-    return zip(first_components, second_components)
+    return set(zip(first_components, second_components))
   
   S = get_S(t)
   return len(compute_Sn(S=S, n=n, group_op=group_operations.op_d_inf))
 
-def gamma_D_inf(n, k, noisy = False):
-  biggest = -1
-  achieved_at = 0
-  for t in incl_range(0, k):
-    val = compute_s_n_old_form(n, k, t)
-    if val > biggest:
-      biggest = val
-      achieved_at = t
-
-  if noisy:
-    print(f"γ({n=}, {k=}) = {format_large_num(biggest)}, achieved with {achieved_at} signs")
-
-  return biggest 
-
-
-def growth_rate_one_sign_assumption(small_k, large_n):
-  val = compute_s_n_old_form(n = large_n, k = small_k, t = 1)
-  theta_bound = large_n**(small_k - 1)
-  print(f"Actual ratio: {val/theta_bound}")
-
-  coefficient = (2**(small_k-1))/factorial(small_k-1)
-  print(f"Conjectured ratio: {coefficient}")
-
-def gamma_n_n_exponent_two_sign_assumption(n):
-  val = compute_s_n_old_form(n, n, t=2)
-  experimental = val ** (1/n)
-  print("experimental: {}".format(experimental))
-
-  conjecture = 3 + 2 * sqrt(2)
-  print("conjecture: {}".format(conjecture))
-
-def check_new_form_matches_old(N = 30, k = 30, noisy = True): 
-  for n in range(1, N + 1):
-    for k in range(1, n + 1):
-      for t in range(1, k+1): 
-        new = compute_s_n_new_form(n, k, t)
-        old = compute_s_n_old_form(n, k, t) 
-        if noisy: 
-          print(f"{new=} {old=}")
-        assert new == old 
-
-def check_limits_with_dif_t_vals(): 
-  t = 14
-  k = 14
-  N = 1000
-  s_n = compute_s_n_old_form(N, k, t)
-  quotient = s_n / (N**(k-1))
-  conj_limit = 2**(k - 2 * t + 1) * choose(2 * t - 2, t- 1) / factorial(k - 1)
+# check all t <= k <= n, up to n = k = t = N
+def match_on_all_vals(f1_nkt, f2_nkt, N, print_all = False): 
+  all_match = True
+  for n in loading_bar(incl_range(1, N)):
+    for k in incl_range(1, n): 
+      for t in incl_range(0, k): 
+        f1_val = f1_nkt(n=n, k=k, t=t)
+        f2_val = f2_nkt(n=n, k=k, t=t)
+        if f1_val != f2_val:
+          all_match = False
+          print(f"FAIL on {n=}, {k=}, {t=}: f1 = {format_large_num(f1_val)}, f2 = {format_large_num(f2_val)}")
+        
+        if print_all:
+          print(f"{n=} {k=} {t=}, f1 = {format_large_num(f1_val)} f2 = {format_large_num(f2_val)}")
   
-  print(f"{conj_limit = }")
-  print(f"{quotient = }")
+  return all_match
 
-def gamma_n_n_limit():
-  N = 400
-  alpha = .7
-  t = round(N * alpha)
-  s_n = compute_s_n_old_form(N, N, t)
-  conj_limit = 3 + 2 * sqrt(2)  
-  emprirical_limit = s_n**(1/N) 
-  print(f"{conj_limit = }")
-  print(f"{emprirical_limit = }")
+all_ways_of_computing_s_n = [new_formula, old_formula, function_simulation, direct_simulation]
+
+def check_all_ways_of_computing_s_n_same():
+  N = 8
+
+  print(f"Checking that all {len(all_ways_of_computing_s_n)} ways of computing S^n match, for \
+          all t <= k <= n, up to n = {N}")
+
+  for i in range(len(all_ways_of_computing_s_n) - 1):
+    f1 = all_ways_of_computing_s_n[i]
+    f2 = all_ways_of_computing_s_n[i+1]
+
+    separator = ("=" * 20)
+    print(separator) 
+    print(f"Checking {f1.__name__} against {f2.__name__}")
+
+    if match_on_all_vals(f1, f2, N=N): 
+      print(f"{f1.__name__} matches {f2.__name__}")
+    else: 
+      print(f"FAIL: {f1.__name__} DOES NOT MATCH {f2.__name__}")
+
+def check_all_ways_of_computing_s_n_same_larger_rand_values(): 
+  n = 30
+  k = 5
+  t = random.randint(1, k) 
+
+  print(f"checking {n=} {k=} {t=}")
+
+  way_to_val = [None] * len(all_ways_of_computing_s_n)
+  for idx, f in enumerate(all_ways_of_computing_s_n):
+    val = f(n=n, k=k, t=t)
+    way_to_val[idx] = val
+    print(f"{f.__name__}({n}, {k}, {t}) = {format_large_num(val)}")
+
+  if len(set(way_to_val)) == 1: 
+    print("Success, all ways returned same value")
+  else: 
+    print("FAIL")
+
+def check_formulas_same(): 
+  N = 50
+  print(f"Checking that formulas match on all values, for all t <= k <= n, up to n = {N}")
+  match_on_all_vals(f1_nkt=new_formula, f2_nkt=old_formula, N=N)
 
 def main():
-  gamma_D_inf(n=20, k = 7, noisy=True)
+  # check_all_ways_of_computing_s_n_same()
+  # check_all_ways_of_computing_s_n_same_larger_rand_values()
+  check_formulas_same()
+  pass
 
 if __name__ == "__main__":
   main()
+
+
+
+
