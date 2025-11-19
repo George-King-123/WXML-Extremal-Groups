@@ -6,12 +6,6 @@ def choose(n, k):
     return 0
   return comb_built_in(n, k)
 
-
-# compute gamma(n, k) for D_infinity
-# we have an explicit formula given n,k, and the number of signs,
-# but we don't know what number of signs is best. So this function 
-# has to check all possible number of signs between 0 and k to live up 
-# to its name. Of course we use the formula for this
 def gamma_D_inf(n, k, noisy = False):
   biggest = -1
   achieved_at = 0
@@ -58,14 +52,10 @@ def compute_s_n_new_form(n, k, t):
   return lone_binomial + first_sum + second_sum()
 
 
-# computes |S^n| when |S| = k and there are t negative signs in S
-# works for k >= 1, n >= 1
 def compute_s_n_old_form(n, k, t, noisy = False):
-
   def I_0(t, k, n):
     return choose(n + (k - t) - 1, (k - t) - 1)
 
-  # returns I_1(t, k, n)
   def I_1(t, k, n):
     res = 0
     for q in range (1, min(k-t, n-1) + 1):
@@ -73,7 +63,6 @@ def compute_s_n_old_form(n, k, t, noisy = False):
     res *= t
     return res
 
-  # returns I_2(t, k, n)
   def I_2(t, k, n):
     res = 0
     for q in range (1, min(k-t, n-2) + 1):
@@ -81,7 +70,6 @@ def compute_s_n_old_form(n, k, t, noisy = False):
     # res *= t
     return res
 
-  # returns R(t, k, n)
   def R(t, k, n): 
     if t in {0, 1}: 
       return 0
@@ -96,7 +84,7 @@ def compute_s_n_old_form(n, k, t, noisy = False):
       for m in range (1, min(t-1, ceil(i / 2)) + 1):
         sigma_value += choose(t, m) * choose(ceil(i / 2) - 1, m - 1) * choose((t-m) + floor(i / 2) - 1, (t - m) - 1)
       
-      if i == n: # note: when i = n, want the first summation to be 1
+      if i == n:
         omega_value = 1
       res += (omega_value * sigma_value)
     return res
@@ -104,7 +92,6 @@ def compute_s_n_old_form(n, k, t, noisy = False):
   if t == 0:
     return choose(n + k - 1, k - 1)
   
-  # set up for the even or odd case
   start = 1 if n % 2 == 0 else k
   cur = 2 if n % 2 == 0 else 3
 
@@ -127,31 +114,16 @@ def compute_s_n_old_form(n, k, t, noisy = False):
   return total
   
 
-
-# We think that for small k and large n that gamma(k, n) grows like n^{k-1}
-# with a coefficient of 2^{k-1}/(k-1)!
-# I believe we have the start of a proof of this? And the simulation below confirms
-# the conjecture
-# Note that when n >> k we are sure (but do not have a proof) that one sign is best,
-# so I only check one sign
-# ex: growth_rate_one_sign_assumption(50, 10000)
 def growth_rate_one_sign_assumption(small_k, large_n):
   val = compute_s_n_old_form(n = large_n, k = small_k, t = 1)
   theta_bound = large_n**(small_k - 1)
-  print("Actual ratio: {}".format(val/theta_bound))
+  print(f"Actual ratio: {val/theta_bound}")
 
   coefficient = (2**(small_k-1))/factorial(small_k-1)
-  print("Conjectured ratio: {}".format(coefficient))
+  print(f"Conjectured ratio: {coefficient}")
 
-
-# We think that gamma_n_n to the 1/n goes to 3 + 2 sqrt(3), check below
-# Use two signs because that seems best for n = k, though we don't have a proof 
-# and also aren't sure two signs always will win. But for the tractable values, up to 
-# 700 or so, it does.
-# ex: gamma_n_n_exponent_two_sign_assumption(200)
-# see the old files for tests of two vs three signs and other nonsense functions
 def gamma_n_n_exponent_two_sign_assumption(n):
-  val = compute_s_n_old_form(n, n, 2)
+  val = compute_s_n_old_form(n, n, t=2)
   experimental = val ** (1/n)
   print("experimental: {}".format(experimental))
 
