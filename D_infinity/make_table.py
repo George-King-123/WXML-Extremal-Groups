@@ -35,38 +35,20 @@ def make_table(N_max, K_max) -> pd.DataFrame:
 
     return table 
 
-def render_latex(table): 
+# TODO: make more readable
+def render_latex(table: pd.DataFrame): 
     table_str = table.map(lambda lst: ", ".join(map(str, lst)))
-    table_str.index.name = r"$k \backslash n$"
-    print(table_str.to_latex(index=True, escape=False))
 
-def render_matplot_lib(table): 
-    # pivot from above
+    # Set index name for LaTeX top-left cell
+    table_str = table_str.reset_index().rename(columns={'index': r"$k \backslash n$"})
 
-    fig, ax = plt.subplots(figsize=(max(6, 0.6*len(table.columns)), max(4, 0.5*len(table.index))))
-    ax.axis('off')
-
-    # cellText expects a 2D list of strings
-    cell_text = table.astype(str).values.tolist()
-    table = ax.table(
-        cellText=cell_text,
-        rowLabels=table.index.astype(str),
-        colLabels=table.columns.astype(str),
-        cellLoc='center',
-        loc='center'
-    )
-
-    # table.auto_set_font_size(False)
-    # table.set_fontsize(10)
-    # table.auto_set_column_width(col=list(range(len(table.columns))))
-
-    plt.tight_layout()
-    plt.show()
-
+    num_cols = table_str.shape[1]
+    col_format = "c|" + "c" * (num_cols - 1)
+    latex_code = table_str.to_latex(index=False, escape=False, column_format=col_format)
+    print(latex_code)
 
 def main():
-    render_latex(make_table(N_max=10, K_max=10))
-    # render_matplot_lib(make_table(N_max=10, K_max=10))
+    render_latex(make_table(N_max=30, K_max=30))
 
 if __name__ == "__main__":
     main()
