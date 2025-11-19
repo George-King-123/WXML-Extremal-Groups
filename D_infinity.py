@@ -1,6 +1,5 @@
 from math import floor, ceil, factorial, sqrt, comb as comb_original
 
-
 # compute gamma(n, k) for D_infinity
 # we have an explicit formula given n,k, and the number of signs,
 # but we don't know what number of signs is best. So this function 
@@ -16,59 +15,9 @@ def gamma_D_inf(n, k, noisy = False):
       achieved_at = t
 
   if noisy:
-    print("gamma(n = {}, k = {}) is {}, achieved with {} signs".format(n, k, biggest, achieved_at))
+    print(f"gamma(n = {n}, k = {k}) is {biggest}, achieved with {achieved_at} signs")
 
   return biggest 
-
-
-def compute_s_n_new_formula(n, k, t):
-  def comb(n, k):
-    if (k > n):
-      return 0
-    if (k < 0 or n < 0):
-      return 0
-    if (k == 0):
-      return 1
-    return comb_original(n, k)
-  
-  def rangeIncl(start, end):
-    return range(start, end + 1)
-
-  if t == 0: 
-    return comb(n + k - 1, k - 1)
-  elif t == 1: 
-    res = 0 
-    for q in range(1, min(k-1, n-1) + 1):
-      res += pow(2, q) * comb(k-1, q) * comb(n-1, q)
-    return res + comb(n + k - 2, k - 2) + 1
-  elif t < k:
-    res = 0 
-    for p in rangeIncl(1, min(t-1, n)):
-      for ell in rangeIncl(p, n):
-        for q in rangeIncl(0, min(k-t, n-ell)):
-          for i in rangeIncl(q, n-ell):
-            if (n - ell - i) % 2 != 0:
-              continue 
-            res += comb(t, p) * comb(ceil(ell/2)-1, p-1) * comb(floor(ell/2) + t - p - 1, t-p-1) * (2**q) * comb(k-t, q) * comb(i-1, q-1)
- 
-    # + .... -
-    for q in rangeIncl(1, min(k-t, n-2)):
-      for i in rangeIncl(q-1, n-2):
-        if (n-i) % 2 != 0: 
-          continue
-        res += (2**q) * comb(k-t, q) * comb(i-1, q-1) 
-
-    return res + comb(n + k - t - 1, k - t - 1)
-  elif t == k: 
-    res = 0 
-    for p in rangeIncl(1, min(t-1, n)):
-      for c in rangeIncl(0, floor(n-p/2)):
-        res += comb(t, p) * comb(ceil(n/2 - c) - 1, p-1) * comb(floor(n/2 -c) + t-p-1, t-p-1)
-    return res + (1 if n % 2 == 0 else 0) 
-
-  else:
-    raise Exception("t > k")
-
 
 # computes |S^n| when |S| = k and there are t negative signs in S
 # works for k >= 1, n >= 1

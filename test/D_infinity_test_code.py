@@ -1,4 +1,6 @@
-from D_infinity import compute_s_n_with_formula_OLD_FORM, compute_s_n_new_formula
+# run with python -m test.D_infinity_test_code
+
+from D_infinity import compute_s_n_with_formula_OLD_FORM
 # import openpyxl
 
 # verifies the formula for D_infinity given in the main file, checking
@@ -110,12 +112,16 @@ def run_simulation(S, n, k):
   return len_n_prods
 
 # requires num_neg <= k
-def compute_size_s_n_simulation(n, k, num_neg):
-  S = [1 for i in range (num_neg, k)] + [-1 for i in range(0, num_neg)]
+def compute_size_s_n_simulation(n, k, num_neg): 
+  S = [1 for _ in range (num_neg, k)] + [-1 for _ in range(0, num_neg)]
   return len(run_simulation(S, n, k))
 
 
-if __name__ == "__main__":
-  # run_check_on_formula(n_upper = 8, k_upper = 8, formula_fcn=compute_s_n_with_formula_OLD_FORM)
-  run_check_on_formula(n_upper = 8, k_upper = 8, formula_fcn=compute_s_n_new_formula, noisy=True)
+def test_formula():
+  run_check_on_formula(n_upper = 8, k_upper = 8, formula_fcn=compute_s_n_with_formula_OLD_FORM, noisy=True)
 
+def main():
+  test_formula()
+
+if __name__ == "__main__":
+  main()
