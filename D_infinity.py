@@ -1,14 +1,10 @@
-from math import floor, ceil, factorial, sqrt, comb as comb_original
+from math import floor, ceil, factorial, sqrt, comb as comb_built_in
 from shared_code import incl_range
 
-def comb(n, k):
-  if (k > n):
-    return 0
+def choose(n, k):
   if (k < 0 or n < 0):
     return 0
-  if (k == 0):
-    return 1
-  return comb_original(n, k)
+  return comb_built_in(n, k)
 
 
 # compute gamma(n, k) for D_infinity
@@ -20,7 +16,7 @@ def gamma_D_inf(n, k, noisy = False):
   biggest = -1
   achieved_at = 0
   for t in range(0, k + 1):
-    val = compute_s_n_with_formula_OLD_FORM(n, k, t)
+    val = compute_s_n_old_form(n, k, t)
     if val > biggest:
       biggest = val
       achieved_at = t
@@ -36,22 +32,21 @@ def compute_s_n_new_form(n, k, t):
       return x 
     
     def term(r):
-      return comb_original(x, r) * comb_original(y//2 - 1, r-1) * comb_original(ceil(y/2) + x - r - 1, x - r - 1)
+      return choose(x, r) * choose(y//2 - 1, r-1) * choose(ceil(y/2) + x - r - 1, x - r - 1)
 
     return sum(term(r) for r in incl_range(1, min(x-1, y//2)))
-
-
+  
   def N(x, y):
     if y == 0: 
       return 1
     
     def term(s):
-      return (2**s) * comb_original(x, s) * comb_original(y-1, s-1)
+      return (2**s) * choose(x, s) * choose(y-1, s-1)
     
     return sum(term(s) for s in incl_range(1, min(x, y)))
   
 
-  lone_binomial = comb(n + k - t - 1, k - t - 1)
+  lone_binomial = choose(n + k - t - 1, k - t - 1)
   first_sum = sum(N(k-t, ell) for ell in range(0, n) if n % 2 == ell % 2)
   
   def second_sum(): 
@@ -65,16 +60,16 @@ def compute_s_n_new_form(n, k, t):
 
 # computes |S^n| when |S| = k and there are t negative signs in S
 # works for k >= 1, n >= 1
-def compute_s_n_with_formula_OLD_FORM(n, k, t, noisy = False):
+def compute_s_n_old_form(n, k, t, noisy = False):
 
   def I_0(t, k, n):
-    return comb(n + (k - t) - 1, (k - t) - 1)
+    return choose(n + (k - t) - 1, (k - t) - 1)
 
   # returns I_1(t, k, n)
   def I_1(t, k, n):
     res = 0
     for q in range (1, min(k-t, n-1) + 1):
-      res += pow(2, q)*comb(k-t, q)*comb(n-2, q-1)
+      res += pow(2, q)*choose(k-t, q)*choose(n-2, q-1)
     res *= t
     return res
 
@@ -82,7 +77,7 @@ def compute_s_n_with_formula_OLD_FORM(n, k, t, noisy = False):
   def I_2(t, k, n):
     res = 0
     for q in range (1, min(k-t, n-2) + 1):
-      res += (pow(2, q) - 1) * comb(k-t, q) * comb(n-3, q-1) 
+      res += (pow(2, q) - 1) * choose(k-t, q) * choose(n-3, q-1) 
     # res *= t
     return res
 
@@ -96,10 +91,10 @@ def compute_s_n_with_formula_OLD_FORM(n, k, t, noisy = False):
       omega_value = 0
       sigma_value = 0
       for q in range (1, min(k - t, n - i) + 1):
-        omega_value += (pow(2, q)) * comb(k-t, q) * comb(n-i -1, q-1)
+        omega_value += (pow(2, q)) * choose(k-t, q) * choose(n-i -1, q-1)
 
       for m in range (1, min(t-1, ceil(i / 2)) + 1):
-        sigma_value += comb(t, m) * comb(ceil(i / 2) - 1, m - 1) * comb((t-m) + floor(i / 2) - 1, (t - m) - 1)
+        sigma_value += choose(t, m) * choose(ceil(i / 2) - 1, m - 1) * choose((t-m) + floor(i / 2) - 1, (t - m) - 1)
       
       if i == n: # note: when i = n, want the first summation to be 1
         omega_value = 1
@@ -107,7 +102,7 @@ def compute_s_n_with_formula_OLD_FORM(n, k, t, noisy = False):
     return res
 
   if t == 0:
-    return comb(n + k - 1, k - 1)
+    return choose(n + k - 1, k - 1)
   
   # set up for the even or odd case
   start = 1 if n % 2 == 0 else k
@@ -141,7 +136,7 @@ def compute_s_n_with_formula_OLD_FORM(n, k, t, noisy = False):
 # so I only check one sign
 # ex: growth_rate_one_sign_assumption(50, 10000)
 def growth_rate_one_sign_assumption(small_k, large_n):
-  val = compute_s_n_with_formula_OLD_FORM(n = large_n, k = small_k, t = 1)
+  val = compute_s_n_old_form(n = large_n, k = small_k, t = 1)
   theta_bound = large_n**(small_k - 1)
   print("Actual ratio: {}".format(val/theta_bound))
 
@@ -156,7 +151,7 @@ def growth_rate_one_sign_assumption(small_k, large_n):
 # ex: gamma_n_n_exponent_two_sign_assumption(200)
 # see the old files for tests of two vs three signs and other nonsense functions
 def gamma_n_n_exponent_two_sign_assumption(n):
-  val = compute_s_n_with_formula_OLD_FORM(n, n, 2)
+  val = compute_s_n_old_form(n, n, 2)
   experimental = val ** (1/n)
   print("experimental: {}".format(experimental))
 
@@ -168,7 +163,7 @@ def check_new_form_matches_old(N = 30, k = 30, noisy = True):
     for k in range(1, n + 1):
       for t in range(1, k+1): 
         new = compute_s_n_new_form(n, k, t)
-        old = compute_s_n_with_formula_OLD_FORM(n, k, t) 
+        old = compute_s_n_old_form(n, k, t) 
         if noisy: 
           print(f"{new=} {old=}")
         assert new == old 
@@ -177,9 +172,9 @@ def check_limits_with_dif_t_vals():
   t = 14
   k = 14
   N = 1000
-  s_n = compute_s_n_with_formula_OLD_FORM(N, k, t)
+  s_n = compute_s_n_old_form(N, k, t)
   quotient = s_n / (N**(k-1))
-  conj_limit = 2**(k - 2 * t + 1) * comb_original(2 * t - 2, t- 1) / factorial(k - 1)
+  conj_limit = 2**(k - 2 * t + 1) * choose(2 * t - 2, t- 1) / factorial(k - 1)
   
   print(f"{conj_limit = }")
   print(f"{quotient = }")
@@ -188,7 +183,7 @@ def gamma_n_n_limit():
   N = 400
   alpha = .7
   t = round(N * alpha)
-  s_n = compute_s_n_with_formula_OLD_FORM(N, N, t)
+  s_n = compute_s_n_old_form(N, N, t)
   conj_limit = 3 + 2 * sqrt(2)  
   emprirical_limit = s_n**(1/N) 
   print(f"{conj_limit = }")
