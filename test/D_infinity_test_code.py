@@ -79,44 +79,6 @@ def maximize_signs_excel_file(n_upper, k_upper, filename):
       best_number_of_signs(n = n, k = k)
     wb.save(filename)
 
-
-
-# the code below is a simulation for D_infinity using functions
-# now that we have a formula, we can consider it test code for the formula
-# (or the other way around)
-def run_simulation(S, n, k):
-  # nested inner method
-  # given a 
-  def compute_one_more(cur_tuple, last_fcn_value, S):
-    # either +1 or -1
-    cur_sign = cur_tuple[1]
-
-    # cur_sum is a list of length k indicating, where 
-    # cur_sum[i] is the (signed) number of times the ith 
-    # elt of S appears in in the sum
-    cur_sum = list(cur_tuple[0])
-    cur_sum[last_fcn_value] += cur_sign
-    cur_sign *= S[last_fcn_value]
-
-    return (tuple(cur_sum), cur_sign)
-
-  if n == 0:
-    return {(tuple([0] * k), 1)}
-  len_n_minus_one_prods = run_simulation(S, n-1, k)
-  len_n_prods = set()
-  for prod in len_n_minus_one_prods:
-    for i in range(0, k):
-      len_n_prods.add(compute_one_more(prod, i, S))
-  # last fcn_value is f(n) for our current value of n
-
-  return len_n_prods
-
-# requires num_neg <= k
-def compute_size_s_n_simulation(n, k, num_neg): 
-  S = [1 for _ in range (num_neg, k)] + [-1 for _ in range(0, num_neg)]
-  return len(run_simulation(S, n, k))
-
-
 def test_formula():
   run_check_on_formula(n_upper = 8, k_upper = 8, formula_fcn=compute_s_n_old_form, noisy=True)
 

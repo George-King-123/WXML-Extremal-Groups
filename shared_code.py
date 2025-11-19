@@ -1,11 +1,24 @@
 from random import randint
+from math import comb as choose_built_in
+
+BIG_NUM = 1_000_000_000
+
+def big_rand_num():
+  return randint(0, BIG_NUM)
+
+def get_sparse_d_tuple(d):
+    return tuple([big_rand_num() for _ in range(0, d)])
+
+def choose(n, k):
+  if (k < 0 or n < 0):
+    return 0
+  return choose_built_in(n, k)
+
+def format_large_num(num): 
+  return f"{num:,}"
 
 def incl_range(start, end):
   return range(start, end+1)
-
-def get_sparse_d_tuple(d):
-    BIG_NUM = 1000000000
-    return tuple([randint(0, BIG_NUM) for _ in range(0, d)])
 
 def compute_Sn(S, n, group_op):
   if n < 1:

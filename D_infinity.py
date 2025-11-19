@@ -1,24 +1,6 @@
-from math import floor, ceil, factorial, sqrt, comb as comb_built_in
-from shared_code import incl_range
-
-def choose(n, k):
-  if (k < 0 or n < 0):
-    return 0
-  return comb_built_in(n, k)
-
-def gamma_D_inf(n, k, noisy = False):
-  biggest = -1
-  achieved_at = 0
-  for t in range(0, k + 1):
-    val = compute_s_n_old_form(n, k, t)
-    if val > biggest:
-      biggest = val
-      achieved_at = t
-
-  if noisy:
-    print(f"gamma(n = {n}, k = {k}) is {biggest}, achieved with {achieved_at} signs")
-
-  return biggest 
+from math import floor, ceil, factorial, sqrt
+from shared_code import incl_range, format_large_num, choose, big_rand_num, compute_Sn
+import group_operations
 
 def compute_s_n_new_form(n, k, t): 
   def R(x, y): 
@@ -51,8 +33,7 @@ def compute_s_n_new_form(n, k, t):
 
   return lone_binomial + first_sum + second_sum()
 
-
-def compute_s_n_old_form(n, k, t, noisy = False):
+def compute_s_n_old_form(n, k, t):
   def I_0(t, k, n):
     return choose(n + (k - t) - 1, (k - t) - 1)
 
@@ -108,11 +89,62 @@ def compute_s_n_old_form(n, k, t, noisy = False):
     cur += 2
 
   total = tot_I_0_contrib + tot_I_1_contrib + tot_I_2_contrib + tot_R_contrib + start
-  if noisy:
-    print(f"I_0: {round(tot_I_0_contrib/total, 4)}, I_1: {round(tot_I_1_contrib/total, 4)}, I_2: {round(tot_I_2_contrib/total, 4)}, R: {round(tot_R_contrib/total, 4)}")
   
   return total
+
+def compute_s_n_function_simulation(n, k, t): 
+  def run_simulation(S, n, k):
+
+    def compute_one_more(cur_tuple, last_fcn_value, S):
+      # either +1 or -1
+      cur_sign = cur_tuple[1]
+
+      # cur_sum is a list of length k indicating, where 
+      # cur_sum[i] is the (signed) number of times the ith 
+      # elt of S appears in in the sum
+      cur_sum = list(cur_tuple[0])
+      cur_sum[last_fcn_value] += cur_sign
+      cur_sign *= S[last_fcn_value]
+
+      return (tuple(cur_sum), cur_sign)
+
+    if n == 0:
+      return {(tuple([0] * k), 1)}
+    len_n_minus_one_prods = run_simulation(S, n-1, k)
+    len_n_prods = set()
+    for prod in len_n_minus_one_prods:
+      for i in range(0, k):
+        len_n_prods.add(compute_one_more(prod, i, S))
+    # last fcn_value is f(n) for our current value of n
+
+    return len_n_prods
+
+  S =  [-1] * t + [1] * (k-t)
+  return len(run_simulation(S, n, k))
+
+def compute_s_n_direct_simulation(n, k, t): 
+  def get_S(t):
+    first_components = [big_rand_num() for _ in range(k)]
+    second_components = [-1] * t + [1] * (k-t)
+    return zip(first_components, second_components)
   
+  S = get_S(t)
+  return len(compute_Sn(S=S, n=n, group_op=group_operations.op_d_inf))
+
+def gamma_D_inf(n, k, noisy = False):
+  biggest = -1
+  achieved_at = 0
+  for t in incl_range(0, k):
+    val = compute_s_n_old_form(n, k, t)
+    if val > biggest:
+      biggest = val
+      achieved_at = t
+
+  if noisy:
+    print(f"γ({n=}, {k=}) = {format_large_num(biggest)}, achieved with {achieved_at} signs")
+
+  return biggest 
+
 
 def growth_rate_one_sign_assumption(small_k, large_n):
   val = compute_s_n_old_form(n = large_n, k = small_k, t = 1)
@@ -162,7 +194,7 @@ def gamma_n_n_limit():
   print(f"{emprirical_limit = }")
 
 def main():
-  check_new_form_matches_old()
+  gamma_D_inf(n=20, k = 7, noisy=True)
 
 if __name__ == "__main__":
   main()
