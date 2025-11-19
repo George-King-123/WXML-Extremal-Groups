@@ -4,7 +4,7 @@ from math import floor, ceil
 from shared_code import incl_range, format_large_num, choose, big_rand_num, compute_Sn
 import group_operations
 from tqdm import tqdm as loading_bar
-import random
+import time 
 
 def new_formula(n, k, t): 
   if t == 0: 
@@ -158,17 +158,16 @@ def match_on_all_vals(f1_nkt, f2_nkt, N, print_all = False):
 all_ways_of_computing_s_n = [new_formula, old_formula, function_simulation, direct_simulation]
 
 def check_all_ways_of_computing_s_n_same():
+  # simulations are quite slow, don't set N much higher than this
   N = 8
 
-  print(f"Checking that all {len(all_ways_of_computing_s_n)} ways of computing S^n match, for \
-          all t <= k <= n, up to n = {N}")
+  print(f"Checking that all {len(all_ways_of_computing_s_n)} ways of computing S^n match,"
+      + f"for all t <= k <= n, up to n = {N}")
 
   for i in range(len(all_ways_of_computing_s_n) - 1):
     f1 = all_ways_of_computing_s_n[i]
     f2 = all_ways_of_computing_s_n[i+1]
 
-    separator = ("=" * 20)
-    print(separator) 
     print(f"Checking {f1.__name__} against {f2.__name__}")
 
     if match_on_all_vals(f1, f2, N=N): 
@@ -176,34 +175,42 @@ def check_all_ways_of_computing_s_n_same():
     else: 
       print(f"FAIL: {f1.__name__} DOES NOT MATCH {f2.__name__}")
 
-def check_all_ways_of_computing_s_n_same_larger_rand_values(): 
-  n = 30
-  k = 5
-  t = random.randint(1, k) 
-
-  print(f"checking {n=} {k=} {t=}")
-
-  way_to_val = [None] * len(all_ways_of_computing_s_n)
-  for idx, f in enumerate(all_ways_of_computing_s_n):
-    val = f(n=n, k=k, t=t)
-    way_to_val[idx] = val
-    print(f"{f.__name__}({n}, {k}, {t}) = {format_large_num(val)}")
-
-  if len(set(way_to_val)) == 1: 
-    print("Success, all ways returned same value")
-  else: 
-    print("FAIL")
+    separator_for_readability = ("=" * 20)
+    print(separator_for_readability) 
 
 def check_formulas_same(): 
-  N = 50
+  N = 40
   print(f"Checking that formulas match on all values, for all t <= k <= n, up to n = {N}")
   match_on_all_vals(f1_nkt=new_formula, f2_nkt=old_formula, N=N)
 
+# used to figure out which formula was faster, and thus should be the canonical formula
+# For N = 50, old takes 21 seconds and new takes 27 seconds 
+def test_formula_speed():
+  N = 50
+
+  def compute_all_vals(f):
+    for n in loading_bar(incl_range(1, N)):
+      for k in incl_range(1, n):
+        for t in incl_range(0, k):
+          f(n=n, k=k, t=t)
+
+  formulas = [old_formula, new_formula]
+  for f in formulas: 
+    print(f"Testing speed of {f.__name__}")
+
+    start = time.perf_counter()
+    compute_all_vals(f)
+    end = time.perf_counter() 
+
+    time_taken = end - start 
+    print(f"{f.__name__} took {time_taken:.2f} seconds to compute value for {N=}")
+
+formula = old_formula
+
 def main():
   # check_all_ways_of_computing_s_n_same()
-  # check_all_ways_of_computing_s_n_same_larger_rand_values()
-  check_formulas_same()
-  pass
+  # check_formulas_same()
+  test_formula_speed()
 
 if __name__ == "__main__":
   main()
