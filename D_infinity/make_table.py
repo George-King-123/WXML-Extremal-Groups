@@ -3,9 +3,6 @@
 import D_infinity.compute_s_n as compute_s_n
 from shared_code import incl_range
 import pandas as pd 
-import matplotlib.pyplot as plt
-
-
 
 def find_maximizing_t_values(n, k):
     maximizers = []
@@ -44,14 +41,14 @@ def render_latex(table: pd.DataFrame) -> str:
         num_cols = table.shape[1]
         return CENTERED_COL + DIVIDER + (CENTERED_COL * (num_cols))
 
-
     def comma_separate_list(list_of_maximizers): 
         return ", ".join([str(t) for t in list_of_maximizers])
+    
+    def hacky_set_labels(df):
+        return df.reset_index().rename(columns={'index': r"$n \backslash k$"})
 
     formatted_table = table.map(comma_separate_list)
-
-    # Set index name for LaTeX top-left cell
-    formatted_table = formatted_table.reset_index().rename(columns={'index': r"$n \backslash k$"})
+    formatted_table = hacky_set_labels(formatted_table)
 
     latex_code = formatted_table.to_latex(index=False, escape=False, column_format=get_column_format())
     return latex_code
