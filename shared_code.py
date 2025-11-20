@@ -7,7 +7,7 @@ def big_rand_num():
   return randint(0, BIG_NUM)
 
 def get_sparse_d_tuple(d):
-    return tuple([big_rand_num() for _ in range(0, d)])
+    return tuple([big_rand_num() for _ in range(d)])
 
 def choose(n, k):
   if (k < 0 or n < 0):

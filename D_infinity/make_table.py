@@ -31,24 +31,33 @@ def make_table(N_max, K_max) -> pd.DataFrame:
     # n = 1 or k = 1 is not interesting
     for n in incl_range(2, N_max):
         for k in incl_range(2, K_max):
-            table.loc[k, n] = find_maximizing_t_values(n=n, k=k)
+            table.loc[n, k] = find_maximizing_t_values(n=n, k=k)
 
     return table 
 
 # TODO: make more readable
-def render_latex(table: pd.DataFrame): 
-    table_str = table.map(lambda lst: ", ".join(map(str, lst)))
+def render_latex(table: pd.DataFrame) -> str: 
+    def get_column_format(): 
+        CENTERED_COL = 'c'
+        DIVIDER = '|'
+        
+        num_cols = table.shape[1]
+        return CENTERED_COL + DIVIDER + (CENTERED_COL * (num_cols))
+
+
+    def comma_separate_list(list_of_maximizers): 
+        return ", ".join([str(t) for t in list_of_maximizers])
+
+    formatted_table = table.map(comma_separate_list)
 
     # Set index name for LaTeX top-left cell
-    table_str = table_str.reset_index().rename(columns={'index': r"$k \backslash n$"})
+    formatted_table = formatted_table.reset_index().rename(columns={'index': r"$n \backslash k$"})
 
-    num_cols = table_str.shape[1]
-    col_format = "c|" + "c" * (num_cols - 1)
-    latex_code = table_str.to_latex(index=False, escape=False, column_format=col_format)
-    print(latex_code)
+    latex_code = formatted_table.to_latex(index=False, escape=False, column_format=get_column_format())
+    return latex_code
 
 def main():
-    render_latex(make_table(N_max=30, K_max=30))
+    print(render_latex(make_table(N_max=20, K_max=10)))
 
 if __name__ == "__main__":
     main()
