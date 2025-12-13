@@ -132,8 +132,10 @@ def test_a_bunch_of_restrictions(n_upper, k_upper, d_upper):
   print("success")
 
 def main():
-   see_how_tight_bounds_are(n=15, k=3)
+  #  see_how_tight_bounds_are(n=15, k=3)
+  #  see_how_tight_bounds_are_check_all_sets(n=15, k=3)
   # test_a_bunch_of_restrictions(6, 6, 3)
+  pass
 
 if __name__ == "__main__": 
     main()
