@@ -1,11 +1,11 @@
 # run with python -m Z_d_wreath_product_S_d
 
 from math import factorial
-import random 
 from group_operations import op_wreath_prod
 from shared_code import compute_Sn, get_sparse_d_tuple, WC, format_large_num
 import Z_d_product_Z_d
 from tqdm import tqdm as loading_bar
+import itertools
 
 # returns a set of all tuples of length d having elements in
 # {0, 1, ..., d-1} representing bijections
@@ -25,44 +25,32 @@ def make_s_d(d:int):
   assert len(res) == factorial(d)
   return res 
 
+# very, very slow. We try all possible second components, so this is the true value of gamma
+def compute_gamma_k_n(k, n, d): 
+  print(f"Computing γ({n=}, {k=}) for Z_d \\rtimes S_d, {d=}")
+  Sd = make_s_d(d)
+  all_possible_snd_component_lists = list(itertools.combinations_with_replacement(Sd, k))
+  assert len(all_possible_snd_component_lists) == len(WC(k, factorial(d)))
 
-# returns S \subset Z^d wreathproduct S_d where |S| = k
-# the numbers in the first component are sparse and the 
-# permutations in the second component are random
-def get_rand_sparse_set(k, d):
-  s_d = list(make_s_d(d))  
-  S = set()
-  
-  # add something to the set k times 
-  for _ in range(0, k):
-    rand_s_d_elt = s_d[random.randrange(factorial(d))]
-    S.add((get_sparse_d_tuple(d), rand_s_d_elt))
-  
-  return S
+  maximum = -1
+  achieving_max = []
+  print(f"Iterating over all {len(all_possible_snd_component_lists)} sets to find max")
+  for snd_component_list in loading_bar(all_possible_snd_component_lists):
+    S = set(
+      [(get_sparse_d_tuple(d), snd_comp) for snd_comp in snd_component_list]
+    )
 
-# try num_iters different sets S with cardinality k, 
-# compute |S^n| for each and take the max
-# ex: compute_approx_gamma_k_n(k = 3, n = 8, d = 3, num_iters = 20, noisy = True)
-def compute_approx_gamma_k_n(k, n, d, num_iters, noisy = False):
-  best = -1
-  best_set = set()
+    val_of_sn = len(compute_Sn(S=S, n=n, group_op=op_wreath_prod))
+    if val_of_sn > maximum: 
+      maximum = val_of_sn 
+      achieving_max = [snd_component_list]
+    elif val_of_sn == maximum:
+      achieving_max.append(snd_component_list)
 
+  print(f"gamma({n=}, {k=}) = {format_large_num(maximum)}")
+  print(f"Achieved with the following second components: {achieving_max}")
 
-  iter_obj = loading_bar(range(num_iters)) if noisy else range(num_iters)
-
-  for _ in iter_obj:
-    S = get_rand_sparse_set(k = k, d = d)
-    val = len(compute_Sn(S = S, n = n, group_op=op_wreath_prod))
-    if val > best:
-      best = val
-      best_set = S 
-  
-  if noisy:
-    print(f"Best value after trying {num_iters} sets: {format_large_num(best)}")
-    print("The best set had these 2nd components:")
-    print_second_components(best_set)
-
-  return best
+  return maximum
 
 # just print the second component, we know the first component is d sparse integers
 def print_second_components(S):
@@ -87,8 +75,8 @@ def compute_Sn_paper_set(n, k, d):
     return len(s_n)
 
 # h_n(r) is the number of n \times n magic squares with sum r, as defined in the overleaf
+# d = 3 throughout this file because we actually have a formula for h_3(r)
 def h_3(r):
-    # formula is relatively well known
     return (r+1) * (r+2) * (r**2 + 3*r + 4) // 8
 
 # f_d(k, n) = \sum_{x \in \WC(n, k)} \prod_{i=1}^{k} h_d(x_i) 
@@ -110,35 +98,15 @@ def lower_bound_3(k, n):
      tot += (f_3(k-2, n-i) * (i - C_3 + 1))
   return tot
 
-def see_how_tight_bounds_are():
-  k=3
-  n=15
+def see_how_tight_bounds_are(n, k):
   d=3
   print(f"Upper bound: f_3(k, n) = {f_3(k, n):_}")
   print(f"Lower bound: {lower_bound_3(k,n):_}")
   print(f"S^n paper set: {compute_Sn_paper_set(n=n, k=k, d=d):_}")
-  compute_approx_gamma_k_n(k = k, n = n, d = d, num_iters = 100, noisy = True)
+  compute_gamma_k_n(k = k, n = n, d = d)
 
-def experiment_with_d_3_bounds(): 
-  
-  def upper_bound(k, n):
-    return f_3(k, n)
-  
-  K = 6
-  N = 70
-
-  print(f"k = {K}, n = {N}")
-
-  upper = upper_bound(K, N)
-  lower = lower_bound_3(K, N)
-
-  print(f"Quotient of bounds: {(upper/lower):_}")
-
-def print_s_n_paper_set():
-  k = 4
-  n = 15
+def print_s_n_paper_set(n, k):
   d = 3
-
   print(f"Upper bound: f_3(k, n) = {f_3(k, n):_}")
   print(f"Lower bound = {lower_bound_3(k,n):_}")
   print(f"S^n paper set: {compute_Sn_paper_set(n=n, k=k, d=d):_}")
@@ -176,11 +144,9 @@ def test_a_bunch_of_restrictions(n_upper, k_upper, d_upper):
 
   print("success")
 
-
 def main():
-  #  experiment_with_d_3_bounds()
-  # print_s_n_paper_set()
-  see_how_tight_bounds_are()
+  print_s_n_paper_set(n=15, k=3)
+  # see_how_tight_bounds_are(n=15, k=3)
   # test_a_bunch_of_restrictions(6, 6, 3)
 
 if __name__ == "__main__": 

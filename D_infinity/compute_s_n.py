@@ -83,19 +83,14 @@ def old_formula(n, k, p):
   start = 1 if n % 2 == 0 else k
   cur = 2 if n % 2 == 0 else 3
 
-  tot_I_0_contrib = 0 
-  tot_I_1_contrib = 0
-  tot_I_2_contrib = 0
-  tot_R_contrib = 0
+  total = start
 
   while cur <= n: 
-    tot_I_0_contrib += I_0(p, k, cur)
-    tot_I_1_contrib += I_1(p, k, cur)
-    tot_I_2_contrib += I_2(p, k, cur)
-    tot_R_contrib += R(p, k, cur)
+    total += I_0(p, k, cur)
+    total += I_1(p, k, cur)
+    total += I_2(p, k, cur)
+    total += R(p, k, cur)
     cur += 2
-
-  total = tot_I_0_contrib + tot_I_1_contrib + tot_I_2_contrib + tot_R_contrib + start
   
   return total
 
@@ -138,7 +133,7 @@ def direct_simulation(n, k, p):
   S = get_S(p)
   return len(compute_Sn(S=S, n=n, group_op=group_operations.op_d_inf))
 
-# check all t <= k <= n, up to n = k = t = N
+# check all p <= k <= n, up to n = k = p = N
 def match_on_all_vals(f1_nkp, f2_nkp, N, print_all = False): 
   all_match = True
   for n in loading_bar(incl_range(1, N)):
@@ -162,7 +157,7 @@ def check_all_ways_of_computing_s_n_same():
   N = 8
 
   print(f"Checking that all {len(all_ways_of_computing_s_n)} ways of computing S^n match,"
-      + f"for all t <= k <= n, up to n = {N}")
+      + f"for all p <= k <= n, up to n = {N}")
   
   all_consecutive_pairs = zip(all_ways_of_computing_s_n, all_ways_of_computing_s_n[1:])
 
@@ -225,9 +220,9 @@ def find_maximizing_p_values(n, k):
   
 def main():
   # check_all_ways_of_computing_s_n_same()
-  # check_formulas_same()
+  check_formulas_same()
   # test_formula_speed()
-  print("Not doing anything, look at main() for options of what this script can do")
+
 
 if __name__ == "__main__":
   main()
