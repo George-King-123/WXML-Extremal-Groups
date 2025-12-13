@@ -1,4 +1,4 @@
-from shared_code import get_sparse_d_tuple, compute_Sn
+from shared_code import get_sparse_d_tuple, compute_Sn, incl_range
 from group_operations import op_Z_d_Z_d
 from math import comb, ceil, floor, factorial
 
@@ -115,6 +115,20 @@ def find_best_t_val_limit(k, d):
 def main():
   # test_predicted_limit(big_number= 10 ** 6, k=10, t=4, d=7)
   print(find_best_t_val_limit(k=20, d=2))
+
+def find_maximizing_t_val(n, k, d): 
+    maximizers = []
+    maximimum = -1 
+
+    for t in incl_range(0, k): 
+        cur_val = formula_when_all_one(n=n, k=k, t=t, d=d)
+        if cur_val > maximimum:
+            maximizers = [t]
+            maximimum = cur_val 
+        elif cur_val == maximimum:
+            maximizers.append(t) 
+    
+    return maximizers
 
 if __name__ == "__main__":
   main()

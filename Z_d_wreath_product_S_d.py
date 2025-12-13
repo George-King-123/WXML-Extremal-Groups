@@ -111,7 +111,7 @@ def WC_generator(n, k):
 
 def WC(n, k):    
   wc = list(WC_generator(n, k)) 
-  assert len(wc) == comb(n + k - 1, k - 1) 
+  assert len(set(wc)) == comb(n + k - 1, k - 1) 
   assert all(sum(x) == n for x in wc)
   assert all(len(x) == k for x in wc)
   return wc

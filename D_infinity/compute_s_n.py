@@ -163,11 +163,10 @@ def check_all_ways_of_computing_s_n_same():
 
   print(f"Checking that all {len(all_ways_of_computing_s_n)} ways of computing S^n match,"
       + f"for all t <= k <= n, up to n = {N}")
+  
+  all_consecutive_pairs = zip(all_ways_of_computing_s_n, all_ways_of_computing_s_n[1:])
 
-  for i in range(len(all_ways_of_computing_s_n) - 1):
-    f1 = all_ways_of_computing_s_n[i]
-    f2 = all_ways_of_computing_s_n[i+1]
-
+  for f1, f2 in all_consecutive_pairs:
     print(f"Checking {f1.__name__} against {f2.__name__}")
 
     if match_on_all_vals(f1, f2, N=N): 
@@ -205,12 +204,26 @@ def test_formula_speed():
     time_taken = end - start 
     print(f"{f.__name__} took {time_taken:.2f} seconds to compute value for {N=}")
 
-formula = old_formula
+FAST_FORMULA = old_formula
 
+def find_maximizing_t_values(n, k):
+    maximizers = []
+    maximimum = -1 
+
+    for t in incl_range(0, k): 
+        cur_val = FAST_FORMULA(n=n, k=k, t=t)
+        if cur_val > maximimum:
+            maximizers = [t]
+            maximimum = cur_val 
+        elif cur_val == maximimum:
+            maximizers.append(t) 
+    
+    return maximizers
+  
 def main():
-  # check_all_ways_of_computing_s_n_same()
-  # check_formulas_same()
-  test_formula_speed()
+  check_all_ways_of_computing_s_n_same()
+  # test_formula_speed()
+  # print("Not doing anything, look at main() for options of what this script can do")
 
 if __name__ == "__main__":
   main()
