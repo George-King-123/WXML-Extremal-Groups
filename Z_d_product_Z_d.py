@@ -2,17 +2,8 @@ from shared_code import get_sparse_d_tuple, compute_Sn, incl_range
 from group_operations import op_Z_d_Z_d
 from math import comb, ceil, floor, factorial
 
-# generates a set S \subset Z^d product Z_d 
-# with |S| = k,
-# where the number of elements with i in the 
-# second component is distro_of_signs[i]
-# thus, k = |S| = sum(distro_of_signs)
-#
-# ex: make_S(3, 6, (1, 3, 2)) will make a set 
-# S = {(x1, 0), (x2, 1), (x3, 1), (x4, 1), (x5, 2), (x6, 2)}
-# where the x_j are 3-tuples of sparse integers 
-# notice there is 1 element with a 0 sign, 3 elements with a 1 sign
-# and 2 elements with a 2 sign
+# generates a set S \subset Z^d product Z_d with |S| = k,
+# where the number of elements with i in the second component is distro_of_signs[i]
 def make_S(k, d, distro_of_signs):
   if len(distro_of_signs) != d:
     raise ValueError("must say how many of each sign")
@@ -40,24 +31,22 @@ def show_we_only_need_one(n, k, d):
 # formula for |S^n| when |S| = k, and there are t elements
 # with a 1 in the 2nd component, k-t elements with a 0
 # (i.e. no other signs)
-# We can prove this formula and it matches with all simulations, 
-# (see the test code)
-def formula_when_all_one(n, k, t, d):
-  # this is just the abelian case
-  if t == 0:
+# We can prove this formula and it matches with all simulations
+def formula_when_all_zero_one_in_snd_comp(n, k, p, d):
+  if p == 0:
     return comb(n + k -1, k - 1)
   
-  if t == k:
+  if p == k:
     res = comb(ceil(n/d) + k - 1, k - 1) ** (n % d)
     res *= comb(floor(n/d) + k - 1, k - 1)**(d - (n % d))
     return res 
 
-  res = comb(n + (k - t) - 1, k - t - 1)
-  for i in range(1, n+1):
-    cur_term = comb(ceil(i/d) + t - 1, t-1)**(i % d) 
-    cur_term *= comb(floor(i/d) + t - 1, t-1)**(d - (i % d))
+  res = comb(n + (k - p) - 1, k - p - 1)
+  for i in incl_range(1, n):
+    cur_term = comb(ceil(i/d) + p - 1, p-1)**(i % d) 
+    cur_term *= comb(floor(i/d) + p - 1, p-1)**(d - (i % d))
     num_forms = min(d, i+1)
-    cur_term *= comb(n - i + num_forms * (k - t) - 1, num_forms * (k - t) - 1)
+    cur_term *= comb(n - i + num_forms * (k - p) - 1, num_forms * (k - p) - 1)
     res += cur_term
   return res
 
@@ -65,11 +54,11 @@ def formula_when_all_one(n, k, t, d):
 # in the second component (we DONT have a proof of this). 
 # Thus we only need to check how many 1s to use, 
 # i.e. try all possibly values of t from 0 to k in the above formula
-def conjectured_gamma_k_n(k, n, d, noisy = False):
+def best_with_ones(k, n, d, noisy = False):
   best = -1
   achieved_at = -1
   for t in range(0, k+1):
-    val = formula_when_all_one(n, k, t, d)
+    val = formula_when_all_zero_one_in_snd_comp(n, k, t, d)
     if val > best:
       best = val
       achieved_at = t 
@@ -87,7 +76,7 @@ def conjectured_gamma_k_n(k, n, d, noisy = False):
 # e.x. try exponent(1000, 5, 3) and exponent(10000, 5, 3)
 def exponent(n, k, d):
   print("\'Actual\'")
-  size_s_n = conjectured_gamma_k_n(n=n, k=k, d=d)
+  size_s_n = best_with_ones(n=n, k=k, d=d)
   print(size_s_n/(n**(d * (k - 1))))
   
   print("Conjecture:")
@@ -102,7 +91,7 @@ def predicted_limit(k, t, d):
     return numerator / denominator
 
 def test_predicted_limit(big_number, k, t, d):
-    numerical_approx_of_limit = formula_when_all_one(n=big_number, k=k, t=t, d=d) / big_number ** (d * (k - 1))
+    numerical_approx_of_limit = formula_when_all_zero_one_in_snd_comp(n=big_number, k=k, p=t, d=d) / big_number ** (d * (k - 1))
     print(f"Numerical approximation of limit: {numerical_approx_of_limit}")
     predicted = predicted_limit(k, t, d)
     print(f"Predicted limit: {predicted}")
@@ -121,7 +110,7 @@ def find_maximizing_t_val(n, k, d):
     maximimum = -1 
 
     for t in incl_range(0, k): 
-        cur_val = formula_when_all_one(n=n, k=k, t=t, d=d)
+        cur_val = formula_when_all_zero_one_in_snd_comp(n=n, k=k, p=t, d=d)
         if cur_val > maximimum:
             maximizers = [t]
             maximimum = cur_val 

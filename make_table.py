@@ -48,7 +48,7 @@ def render_latex(table: pd.DataFrame, highlight_diagonal=True) -> str:
     return latex_code
 
 def d_infty():
-    return render_latex(make_table(N_max=20, K_max=10, f_nk=D_infinity.compute_s_n.find_maximizing_t_values))
+    return render_latex(make_table(N_max=20, K_max=10, f_nk=D_infinity.compute_s_n.find_maximizing_p_values))
 
 def s_d(d, n_min=2, k_min=2, N_max=20, K_max=10):
     def f(n, k):

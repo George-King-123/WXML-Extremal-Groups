@@ -24,7 +24,7 @@ def restrict_to_Z_d(n, k, d, t):
     return S
   
   val_from_s_d_sim = len(compute_Sn(S = get_s_d_set(), n = n, group_op = op_wreath_prod))
-  val_from_z_d_formula = Z_d_product_Z_d.formula_when_all_one(n = n, k =k, t=t, d=d)
+  val_from_z_d_formula = Z_d_product_Z_d.formula_when_all_zero_one_in_snd_comp(n = n, k =k, p=t, d=d)
 
   return val_from_s_d_sim == val_from_z_d_formula
 

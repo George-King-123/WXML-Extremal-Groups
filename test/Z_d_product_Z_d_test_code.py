@@ -1,4 +1,4 @@
-from Z_d_product_Z_d import make_S, formula_when_all_one
+from Z_d_product_Z_d import make_S, formula_when_all_zero_one_in_snd_comp
 from shared_code import compute_Sn
 from group_operations import op_Z_d_Z_d
 
@@ -11,7 +11,7 @@ def test_formula_all_one_many_vals(d_upper, n_upper, k_upper):
   def conj_works(n, k, t, d):
     S = make_S(d = d, k = k, distro_of_signs= [k - t, t] + ([0] * (d-2)))
     s_n = compute_Sn(S, n, op_Z_d_Z_d)
-    return len(s_n) == formula_when_all_one(n, k, t, d)
+    return len(s_n) == formula_when_all_zero_one_in_snd_comp(n, k, t, d)
   
 
   for d in range(2, d_upper + 1):

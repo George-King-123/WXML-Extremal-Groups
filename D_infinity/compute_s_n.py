@@ -6,8 +6,8 @@ import group_operations
 from tqdm import tqdm as loading_bar
 import time 
 
-def new_formula(n, k, t): 
-  if t == 0: 
+def new_formula(n, k, p): 
+  if p == 0: 
     return choose(n + k - 1, k - 1)
 
   def R(x, y): 
@@ -29,55 +29,55 @@ def new_formula(n, k, t):
     return sum(term(s) for s in incl_range(1, min(x, y)))
   
 
-  lone_binomial = choose(n + k - t - 1, k - t - 1)
-  first_sum = sum(N(k-t, ell) for ell in range(0, n) if n % 2 == ell % 2)
+  lone_binomial = choose(n + k - p - 1, k - p - 1)
+  first_sum = sum(N(k-p, ell) for ell in range(0, n) if n % 2 == ell % 2)
   
   def second_sum(): 
     def inner_sum(ell):
-      return sum(R(t, q) * N(k-t, ell - q) for q in incl_range(1, ell))
+      return sum(R(p, q) * N(k-p, ell - q) for q in incl_range(1, ell))
 
     return sum(inner_sum(ell) for ell in incl_range(1, n) if n % 2 == ell % 2)
 
   return lone_binomial + first_sum + second_sum()
 
-def old_formula(n, k, t):
+def old_formula(n, k, p):
   def I_0(t, k, n):
-    return choose(n + (k - t) - 1, (k - t) - 1)
+    return choose(n + (k - p) - 1, (k - p) - 1)
 
-  def I_1(t, k, n):
+  def I_1(p, k, n):
     res = 0
-    for q in range (1, min(k-t, n-1) + 1):
-      res += pow(2, q)*choose(k-t, q)*choose(n-2, q-1)
-    res *= t
+    for q in range (1, min(k-p, n-1) + 1):
+      res += pow(2, q)*choose(k-p, q)*choose(n-2, q-1)
+    res *= p
     return res
 
-  def I_2(t, k, n):
+  def I_2(p, k, n):
     res = 0
-    for q in range (1, min(k-t, n-2) + 1):
-      res += (pow(2, q) - 1) * choose(k-t, q) * choose(n-3, q-1) 
-    # res *= t
+    for q in range (1, min(k-p, n-2) + 1):
+      res += (pow(2, q) - 1) * choose(k-p, q) * choose(n-3, q-1) 
+    # res *= p
     return res
 
-  def R(t, k, n): 
-    if t in {0, 1}: 
+  def R(p, k, n): 
+    if p in {0, 1}: 
       return 0
 
     res = 0
     for i in range(2, n + 1):
       omega_value = 0
       sigma_value = 0
-      for q in range (1, min(k - t, n - i) + 1):
-        omega_value += (pow(2, q)) * choose(k-t, q) * choose(n-i -1, q-1)
+      for q in range (1, min(k - p, n - i) + 1):
+        omega_value += (pow(2, q)) * choose(k-p, q) * choose(n-i -1, q-1)
 
-      for m in range (1, min(t-1, ceil(i / 2)) + 1):
-        sigma_value += choose(t, m) * choose(ceil(i / 2) - 1, m - 1) * choose((t-m) + floor(i / 2) - 1, (t - m) - 1)
+      for m in range (1, min(p-1, ceil(i / 2)) + 1):
+        sigma_value += choose(p, m) * choose(ceil(i / 2) - 1, m - 1) * choose((p-m) + floor(i / 2) - 1, (p - m) - 1)
       
       if i == n:
         omega_value = 1
       res += (omega_value * sigma_value)
     return res
 
-  if t == 0:
+  if p == 0:
     return choose(n + k - 1, k - 1)
   
   start = 1 if n % 2 == 0 else k
@@ -89,17 +89,17 @@ def old_formula(n, k, t):
   tot_R_contrib = 0
 
   while cur <= n: 
-    tot_I_0_contrib += I_0(t, k, cur)
-    tot_I_1_contrib += I_1(t, k, cur)
-    tot_I_2_contrib += I_2(t, k, cur)
-    tot_R_contrib += R(t, k, cur)
+    tot_I_0_contrib += I_0(p, k, cur)
+    tot_I_1_contrib += I_1(p, k, cur)
+    tot_I_2_contrib += I_2(p, k, cur)
+    tot_R_contrib += R(p, k, cur)
     cur += 2
 
   total = tot_I_0_contrib + tot_I_1_contrib + tot_I_2_contrib + tot_R_contrib + start
   
   return total
 
-def function_simulation(n, k, t): 
+def function_simulation(n, k, p): 
   def run_simulation(S, n, k):
 
     def compute_one_more(cur_tuple, last_fcn_value, S):
@@ -126,32 +126,32 @@ def function_simulation(n, k, t):
 
     return len_n_prods
 
-  S =  [-1] * t + [1] * (k-t)
+  S =  [-1] * p + [1] * (k-p)
   return len(run_simulation(S, n, k))
 
-def direct_simulation(n, k, t): 
-  def get_S(t):
+def direct_simulation(n, k, p): 
+  def get_S(p):
     first_components = [big_rand_num() for _ in range(k)]
-    second_components = [-1] * t + [1] * (k-t)
+    second_components = [-1] * p + [1] * (k-p)
     return set(zip(first_components, second_components))
   
-  S = get_S(t)
+  S = get_S(p)
   return len(compute_Sn(S=S, n=n, group_op=group_operations.op_d_inf))
 
 # check all t <= k <= n, up to n = k = t = N
-def match_on_all_vals(f1_nkt, f2_nkt, N, print_all = False): 
+def match_on_all_vals(f1_nkp, f2_nkp, N, print_all = False): 
   all_match = True
   for n in loading_bar(incl_range(1, N)):
     for k in incl_range(1, n): 
-      for t in incl_range(0, k): 
-        f1_val = f1_nkt(n=n, k=k, t=t)
-        f2_val = f2_nkt(n=n, k=k, t=t)
+      for p in incl_range(0, k): 
+        f1_val = f1_nkp(n=n, k=k, p=p)
+        f2_val = f2_nkp(n=n, k=k, p=p)
         if f1_val != f2_val:
           all_match = False
-          print(f"FAIL on {n=}, {k=}, {t=}: f1 = {format_large_num(f1_val)}, f2 = {format_large_num(f2_val)}")
+          print(f"FAIL on {n=}, {k=}, {p=}: f1 = {format_large_num(f1_val)}, f2 = {format_large_num(f2_val)}")
         
         if print_all:
-          print(f"{n=} {k=} {t=}, f1 = {format_large_num(f1_val)} f2 = {format_large_num(f2_val)}")
+          print(f"{n=} {k=} {p=}, f1 = {format_large_num(f1_val)} f2 = {format_large_num(f2_val)}")
   
   return all_match
 
@@ -180,7 +180,7 @@ def check_all_ways_of_computing_s_n_same():
 def check_formulas_same(): 
   N = 40
   print(f"Checking that formulas match on all values, for all t <= k <= n, up to n = {N}")
-  match_on_all_vals(f1_nkt=new_formula, f2_nkt=old_formula, N=N)
+  match_on_all_vals(f1_nkp=new_formula, f2_nkp=old_formula, N=N)
 
 # used to figure out which formula was faster, and thus should be the canonical formula
 # For N = 50, old takes 21 seconds and new takes 27 seconds 
@@ -190,8 +190,8 @@ def test_formula_speed():
   def compute_all_vals(f):
     for n in loading_bar(incl_range(1, N)):
       for k in incl_range(1, n):
-        for t in incl_range(0, k):
-          f(n=n, k=k, t=t)
+        for p in incl_range(0, k):
+          f(n=n, k=k, p=p)
 
   formulas = [old_formula, new_formula]
   for f in formulas: 
@@ -206,24 +206,28 @@ def test_formula_speed():
 
 FAST_FORMULA = old_formula
 
-def find_maximizing_t_values(n, k):
+def gamma_D_inf(n, k):
+  return max(FAST_FORMULA(n, k, p) for p in incl_range(0, k))
+
+def find_maximizing_p_values(n, k):
     maximizers = []
     maximimum = -1 
 
-    for t in incl_range(0, k): 
-        cur_val = FAST_FORMULA(n=n, k=k, t=t)
+    for p in incl_range(0, k): 
+        cur_val = FAST_FORMULA(n=n, k=k, p=p)
         if cur_val > maximimum:
-            maximizers = [t]
+            maximizers = [p]
             maximimum = cur_val 
         elif cur_val == maximimum:
-            maximizers.append(t) 
+            maximizers.append(p) 
     
     return maximizers
   
 def main():
-  check_all_ways_of_computing_s_n_same()
+  # check_all_ways_of_computing_s_n_same()
+  # check_formulas_same()
   # test_formula_speed()
-  # print("Not doing anything, look at main() for options of what this script can do")
+  print("Not doing anything, look at main() for options of what this script can do")
 
 if __name__ == "__main__":
   main()
