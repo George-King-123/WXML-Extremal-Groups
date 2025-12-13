@@ -69,7 +69,6 @@ def test_formula_all_one_many_vals(d_upper, n_upper, k_upper):
           
   print("success")
 
-
 # test \lim_{n \to \infty} formula(t, d, k, n) / n^{d(k-1)}. 
 # This didn't end up being important in the paper
 # This call doesn't take too long: test_predicted_limit(big_number= 10 ** 6, k=10, p=4, d=7)
