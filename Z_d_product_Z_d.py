@@ -101,7 +101,7 @@ def find_maximizing_t_val(n, k, d):
 
 def main():
   # test_formula_all_one_many_vals(6, 6, 5)
-  print("Not doing anything, look at main() for options of what this script can do")
+  pass
 
 
 if __name__ == "__main__":

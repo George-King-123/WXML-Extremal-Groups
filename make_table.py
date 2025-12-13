@@ -3,7 +3,6 @@
 import D_infinity.compute_s_n
 import Z_d_product_Z_d
 from shared_code import incl_range
-from tqdm import tqdm
 import pandas as pd 
 
 def make_table(N_max, K_max, f_nk, n_min=2, k_min=2) -> pd.DataFrame:
@@ -14,7 +13,7 @@ def make_table(N_max, K_max, f_nk, n_min=2, k_min=2) -> pd.DataFrame:
     )
 
     for n in incl_range(n_min, N_max):
-        for k in tqdm(incl_range(k_min, K_max)):
+        for k in incl_range(k_min, K_max):
             table.loc[n, k] = f_nk(n=n, k=k)
 
     return table 
@@ -56,7 +55,9 @@ def s_d(d, n_min=2, k_min=2, N_max=20, K_max=10):
     return render_latex(make_table(N_max=N_max, K_max=K_max, f_nk=f, n_min=n_min, k_min=k_min))
 
 def main():
-    print(d_infty())
+    # print(d_infty())
+    # print(s_d(3))
+    pass
 
 if __name__ == "__main__":
     main()

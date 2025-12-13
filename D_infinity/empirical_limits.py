@@ -26,7 +26,7 @@ def gamma_n_n_growth(n, p):
 def main():
   # gamma_n_n_growth(n=200, p=2)
   # gamma_k_n_growth(small_k=4, large_n=1000, p = 1)
-  print("Not doing anything, look in main() for what this script can do")
+  pass
 
 if __name__ == "__main__":
   main()
