@@ -2,26 +2,15 @@
 
 from math import factorial
 from group_operations import op_wreath_prod
-from shared_code import compute_Sn, get_sparse_d_tuple, WC, format_large_num
+from shared_code import compute_Sn, get_sparse_d_tuple, WC, format_large_num, incl_range
 import Z_d_product_Z_d
 from tqdm import tqdm as loading_bar
 import itertools
 
 # returns a set of all tuples of length d having elements in
 # {0, 1, ..., d-1} representing bijections
-def make_s_d(d:int):
-  def select(cur, all_elts:set, available_nums:set):
-    if len(available_nums) == 0:
-      all_elts.add(tuple(cur))
-      return
-    
-    for i in available_nums:
-      cur.append(i)
-      select(cur, all_elts, available_nums.difference({i}))
-      cur.remove(i)
-  
-  res = set()
-  select([], res, {i for i in range (0, d)})
+def make_s_d(d: int):
+  res = set(itertools.permutations(range(d), d))
   assert len(res) == factorial(d)
   return res 
 
@@ -99,26 +88,24 @@ def lower_bound_3(k, n):
   return tot
 
 def see_how_tight_bounds_are(n, k):
-  d=3
-  print(f"Upper bound: f_3(k, n) = {f_3(k, n):_}")
-  print(f"Lower bound: {lower_bound_3(k,n):_}")
-  print(f"S^n paper set: {compute_Sn_paper_set(n=n, k=k, d=d):_}")
-  compute_gamma_k_n(k = k, n = n, d = d)
-
-def print_s_n_paper_set(n, k):
   d = 3
   print(f"Upper bound: f_3(k, n) = {f_3(k, n):_}")
   print(f"Lower bound = {lower_bound_3(k,n):_}")
   print(f"S^n paper set: {compute_Sn_paper_set(n=n, k=k, d=d):_}")
+
+def see_how_tight_bounds_are_check_all_sets(n, k):
+  d=3
+  see_how_tight_bounds_are(n, k)
+  compute_gamma_k_n(k = k, n = n, d = d)
 
 # Since Z_d is a special case of S_d, we can test the S_d code by making sure a set 
 # that only has "shift by one" permutations agrees with the formula we came up 
 # with for Z_d
 # using the given n, k, d, and t many components with 1 in the 2nd component
 # with k - t elements having 0 in the 2nd component
-def restrict_to_Z_d(n, k, d, p):
+def restrict_to_Z_d_works(n, k, d, p):
   def get_s_d_set():
-    # shift_by_one \in Z_d
+    # shift_by_one, identity \in Z_d \subseteq S_d.
     shift_by_one = tuple(list(range(1, d)) + [0])
     identity = tuple(range(0, d))
     
@@ -135,18 +122,17 @@ def restrict_to_Z_d(n, k, d, p):
 # ex: test_a_bunch_of_restrictions(6, 6, 3)
 def test_a_bunch_of_restrictions(n_upper, k_upper, d_upper):
   print("Testing S_d code by seeing that it lines up with Z_d")
-  for n in range(1, n_upper + 1):
-    for k in range(1, k_upper + 1):
-      for d in range(1, d_upper + 1):
-        for p in range(0, k + 1):
-          if not restrict_to_Z_d(n=n, k = k, d= d, p = p):
+  for n in incl_range(1, n_upper):
+    for k in incl_range(1, k_upper):
+      for d in incl_range(1, d_upper):
+        for p in incl_range(0, k):
+          if not restrict_to_Z_d_works(n=n, k=k, d=d, p=p):
             print("fail")
 
   print("success")
 
 def main():
-  print_s_n_paper_set(n=15, k=3)
-  # see_how_tight_bounds_are(n=15, k=3)
+   see_how_tight_bounds_are(n=15, k=3)
   # test_a_bunch_of_restrictions(6, 6, 3)
 
 if __name__ == "__main__": 
