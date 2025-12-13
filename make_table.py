@@ -13,15 +13,13 @@ def make_table(N_max, K_max, f_nk, n_min=2, k_min=2) -> pd.DataFrame:
         dtype=object
     )
 
-    # n = 1 or k = 1 is not interesting
     for n in incl_range(n_min, N_max):
         for k in tqdm(incl_range(k_min, K_max)):
             table.loc[n, k] = f_nk(n=n, k=k)
 
     return table 
 
-
-# TODO: make more readable
+# TODO: This function isn't pretty to look at, but does get the latex table looking right 
 def render_latex(table: pd.DataFrame, highlight_diagonal=True) -> str: 
     def get_column_format(): 
         CENTERED_COL = 'c'
@@ -29,8 +27,6 @@ def render_latex(table: pd.DataFrame, highlight_diagonal=True) -> str:
         
         num_cols = table.shape[1]
         return CENTERED_COL + DIVIDER + (CENTERED_COL * (num_cols))
-
-
 
     def comma_separate_list(list_of_maximizers): 
         return ", ".join([str(t) for t in list_of_maximizers])
@@ -46,11 +42,8 @@ def render_latex(table: pd.DataFrame, highlight_diagonal=True) -> str:
                 if k_val == n_val:
                     formatted_table.loc[k_val, n_val] = "\\cellcolor{lightgray}" + str(formatted_table.loc[k_val, n_val])
 
-
     formatted_table = hacky_set_labels(formatted_table)
 
-
-    
     latex_code = formatted_table.to_latex(index=False, escape=False, column_format=get_column_format())
     return latex_code
 
@@ -63,17 +56,7 @@ def s_d(d, n_min=2, k_min=2, N_max=20, K_max=10):
     return render_latex(make_table(N_max=N_max, K_max=K_max, f_nk=f, n_min=n_min, k_min=k_min))
 
 def main():
-    tables = [s_d(2)]
-    with open('tables.txt', 'w') as f: 
-        for t in tables:
-            f.write(t)
-            f.write('\n\n')
-
-    # n_min = 4000
-    # n_max = n_min + 3
-    # print(s_d(d=20, n_min=n_min, k_min=100, N_max=n_max, K_max=110))
-    # print(Z_d_product_Z_d.find_maximizing_t_val(n=2050, k=100, d=20))
-    # # find_crossover()
+    print(d_infty())
 
 if __name__ == "__main__":
     main()
