@@ -5,6 +5,7 @@ from group_operations import op_Z_d_Z_d
 from math import comb, ceil, floor, factorial
 from tqdm import tqdm as loading_bar 
 import time
+from collections import defaultdict
 
 # generates a set S \subset Z^d product Z_d with |S| = k,
 # where the number of elements with i in the second component is distro_of_signs[i]
@@ -116,7 +117,6 @@ def weak_composition_simulation(distro_of_signs, n):
     
     s_n_minus_one = get_s_n(n-1)
     result = set()
-
     for first_comp, shift in s_n_minus_one:
       for i in range(k): 
         first_comp_of_product = list(first_comp)
@@ -128,6 +128,16 @@ def weak_composition_simulation(distro_of_signs, n):
     return result
   
   s_n = get_s_n(n) 
+
+  first_kd_1 = defaultdict(int)
+  for t, _ in s_n: 
+    first_kd_1[t[:d * (k-1) + 1]] += 1
+
+  M = max(first_kd_1.values()) 
+  if M > 1:
+    print(M)
+    print(distro_of_signs)
+
 
   return len(s_n)
 
@@ -224,8 +234,8 @@ def main():
   # test_wc_sim(n=10, k=5, d=4)
   # simulation_speed()
   # weak_composition_simulation((5, 1, 0, 0), 7)
-  # gamma_zd(n=5, k=15, d=4)
-  test_conjecture2(maxN=6, maxK=6, maxD=5)
+  gamma_zd(n=5, k=4, d=5)
+  # test_conjecture2(maxN=6, maxK=6, maxD=5)
   pass
 
 
