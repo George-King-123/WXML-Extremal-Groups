@@ -117,7 +117,7 @@ def weak_composition_simulation(distro_of_signs, n):
     s_n_minus_one = get_s_n(n-1)
     result = set()
 
-    for first_comp, shift in loading_bar(s_n_minus_one):
+    for first_comp, shift in s_n_minus_one:
       for i in range(k): 
         first_comp_of_product = list(first_comp)
         first_comp_of_product[d * i + shift] += 1
@@ -129,42 +129,69 @@ def weak_composition_simulation(distro_of_signs, n):
   
   s_n = get_s_n(n) 
 
-  def compute_function_histogram(t):
-    return tuple(
-      [sum(t[d * i + j] for j in range(d)) for i in range(k)] 
-    )
-  
-  histogram_to_vals = {}
-  for t, _ in s_n: 
-    hist = compute_function_histogram(t)
-    assert sum(hist) == n 
-    assert len(hist) == k 
-
-    if hist not in histogram_to_vals: 
-      histogram_to_vals[hist] = [] 
-    
-    histogram_to_vals[hist].append(t)
-
-  num_vals_per_histogram = sorted([len(histogram_to_vals[hist]) for hist in histogram_to_vals])
-  num_possible_histograms = len(WC(n, k))
-  print(f"{num_possible_histograms=}")
-  print(f"{len(num_vals_per_histogram)=}")
-  
-  print(num_vals_per_histogram)
-
-  print(format_large_num(len(s_n)))
   return len(s_n)
 
-def test_advanced_simulation(n, k, d): 
+def gamma_zd(n, k, d, noisy = False): 
+  maximizing_distros = []
+  best_value = -1
+
   all_sign_distros = WC(k, d) 
   for distro in all_sign_distros: 
-    advanced_val = weak_composition_simulation(distro_of_signs=distro, n=n)
-    simple_val = compute_s_n_with_sign_distribution(distribution=distro, n=n)
+    size_s_n = weak_composition_simulation(distro_of_signs=distro, n=n)
 
-    if advanced_val == simple_val:
-      print("good")
-    else:
-      print("FAIL 👎")
+    if size_s_n > best_value: 
+      best_value = size_s_n 
+      maximizing_distros = [distro]
+    elif size_s_n == best_value:
+      maximizing_distros.append(distro)
+
+  if noisy:
+    print(f"{maximizing_distros=}")
+    print(f"gamma_zd({n=}, {k=}) = {format_large_num(best_value)} for {d=}")
+
+  return best_value, maximizing_distros
+
+def test_conjecture(maxN, maxK, maxD): 
+  def test_conjecture_one_val(n, k, d): 
+    best_value, maximizing_distros = gamma_zd(n=n, k=k, d=d)
+    return any(
+      distro[0] + distro[1] == k for distro in maximizing_distros
+    )
+
+  for n in incl_range(1, maxN): 
+    for k in incl_range(1, maxK): 
+      for d in incl_range(2, maxD): 
+        print(test_conjecture_one_val(n=n, k=k, d=d))
+
+def test_conjecture2(maxN, maxK, maxD): 
+  def test_conjecture_one_val(n, k, d): 
+    all_distros = WC(k, d)
+    for distro in all_distros: 
+      if distro[0] + distro[1] != k: 
+        val_of_distro = weak_composition_simulation(distro_of_signs=distro, n=n)
+
+        modified_distro = tuple([distro[0], k-distro[0]] + [0] * (d-2))
+        val_of_modified_distro = weak_composition_simulation(distro_of_signs=modified_distro, n=n)
+
+        if val_of_modified_distro < val_of_distro and distro[0] != 0:
+          print(f"conjecture FAILS on {distro}. {val_of_distro=} {val_of_modified_distro=}")
+
+  for n in loading_bar(incl_range(1, maxN)): 
+    for k in incl_range(1, maxK): 
+      for d in incl_range(2, maxD): 
+        test_conjecture_one_val(n=n, k=k, d=d)
+
+def test_wc_sim(n, k, d): 
+  all_sign_distros = WC(k, d) 
+  for distro in loading_bar(all_sign_distros): 
+    advanced_val = weak_composition_simulation(distro_of_signs=distro, n=n)
+    simple_val = compute_s_n_with_sign_distribution(distro_of_signs=distro, n=n)
+
+    if advanced_val != simple_val:
+      print("FAIL")
+      return
+  
+  print("all good")
 
 
 def simulation_speed():
@@ -190,11 +217,15 @@ def simulation_speed():
     print(f"{f.__name__} took {time_taken:.2f} seconds to compute value for {N=}")
 
 
+
+
 def main():
   # test_formula_all_one_many_vals(6, 6, 5)
-  # test_advanced_simulation(n=10, k=5, d=4)
+  # test_wc_sim(n=10, k=5, d=4)
   # simulation_speed()
-  weak_composition_simulation((5, 1, 0, 0), 12)
+  # weak_composition_simulation((5, 1, 0, 0), 7)
+  # gamma_zd(n=5, k=15, d=4)
+  test_conjecture2(maxN=6, maxK=6, maxD=5)
   pass
 
 
