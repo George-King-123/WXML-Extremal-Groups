@@ -1,6 +1,6 @@
 # run with python -m Z_d_product_Z_d
 
-from shared_code import get_sparse_d_tuple, compute_Sn, incl_range, WC
+from shared_code import get_sparse_d_tuple, compute_Sn, incl_range, WC, format_large_num
 from group_operations import op_Z_d_Z_d
 from math import comb, ceil, floor, factorial
 from tqdm import tqdm as loading_bar 
@@ -110,17 +110,14 @@ def weak_composition_simulation(distro_of_signs, n):
   id = (tuple([0] * (k * d)), 0)
   s_0 = { id }
   
-  def s_n(n):
+  def get_s_n(n):
     if n == 0: 
       return s_0
     
-    s_n_minus_one = s_n(n-1)
+    s_n_minus_one = get_s_n(n-1)
     result = set()
 
-    for first_comp, shift in s_n_minus_one:
-      assert len(first_comp) == k * d 
-      assert sum(first_comp) == n - 1
-
+    for first_comp, shift in loading_bar(s_n_minus_one):
       for i in range(k): 
         first_comp_of_product = list(first_comp)
         first_comp_of_product[d * i + shift] += 1
@@ -129,8 +126,34 @@ def weak_composition_simulation(distro_of_signs, n):
         result.add((tuple(first_comp_of_product), snd_comp_of_product))
 
     return result
+  
+  s_n = get_s_n(n) 
 
-  return len(s_n(n))
+  def compute_function_histogram(t):
+    return tuple(
+      [sum(t[d * i + j] for j in range(d)) for i in range(k)] 
+    )
+  
+  histogram_to_vals = {}
+  for t, _ in s_n: 
+    hist = compute_function_histogram(t)
+    assert sum(hist) == n 
+    assert len(hist) == k 
+
+    if hist not in histogram_to_vals: 
+      histogram_to_vals[hist] = [] 
+    
+    histogram_to_vals[hist].append(t)
+
+  num_vals_per_histogram = sorted([len(histogram_to_vals[hist]) for hist in histogram_to_vals])
+  num_possible_histograms = len(WC(n, k))
+  print(f"{num_possible_histograms=}")
+  print(f"{len(num_vals_per_histogram)=}")
+  
+  print(num_vals_per_histogram)
+
+  print(format_large_num(len(s_n)))
+  return len(s_n)
 
 def test_advanced_simulation(n, k, d): 
   all_sign_distros = WC(k, d) 
@@ -170,7 +193,8 @@ def simulation_speed():
 def main():
   # test_formula_all_one_many_vals(6, 6, 5)
   # test_advanced_simulation(n=10, k=5, d=4)
-  simulation_speed()
+  # simulation_speed()
+  weak_composition_simulation((5, 1, 0, 0), 12)
   pass
 
 
