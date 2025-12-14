@@ -1,8 +1,10 @@
-# run with Python -m Z_d_product_Z_d
+# run with python -m Z_d_product_Z_d
 
-from shared_code import get_sparse_d_tuple, compute_Sn, incl_range
+from shared_code import get_sparse_d_tuple, compute_Sn, incl_range, WC
 from group_operations import op_Z_d_Z_d
 from math import comb, ceil, floor, factorial
+from tqdm import tqdm as loading_bar 
+import time
 
 # generates a set S \subset Z^d product Z_d with |S| = k,
 # where the number of elements with i in the second component is distro_of_signs[i]
@@ -22,14 +24,14 @@ def make_S(k, d, distro_of_signs):
 
 # Returns |S^n| when S is constructed with the sign distrubtion as described
 # in make_S
-def compute_s_n_with_sign_distribution(n, d, distribution):
-  S = make_S(d = d, k = sum(distribution), distro_of_signs= distribution)
+def compute_s_n_with_sign_distribution(n, distro_of_signs):
+  S = make_S(d = len(distro_of_signs), k = sum(distro_of_signs), distro_of_signs= distro_of_signs)
   s_n = compute_Sn(S, n, op_Z_d_Z_d)
   return len(s_n)
 
 def formula_when_all_zero_one_in_snd_comp(n, k, p, d):
   if p == 0:
-    return comb(n + k -1, k - 1)
+    return comb(n + k - 1, k - 1)
   
   if p == k:
     res = comb(ceil(n/d) + k - 1, k - 1) ** (n % d)
@@ -98,8 +100,77 @@ def find_maximizing_t_val(n, k, d):
     
     return maximizers
 
+
+def weak_composition_simulation(distro_of_signs, n):
+  d = len(distro_of_signs)
+  k = sum(distro_of_signs)
+
+  S = [i for i in range(d) for _ in range(distro_of_signs[i])]
+
+  id = (tuple([0] * (k * d)), 0)
+  s_0 = { id }
+  
+  def s_n(n):
+    if n == 0: 
+      return s_0
+    
+    s_n_minus_one = s_n(n-1)
+    result = set()
+
+    for first_comp, shift in s_n_minus_one:
+      assert len(first_comp) == k * d 
+      assert sum(first_comp) == n - 1
+
+      for i in range(k): 
+        first_comp_of_product = list(first_comp)
+        first_comp_of_product[d * i + shift] += 1
+        snd_comp_of_product = (shift + S[i]) % d
+
+        result.add((tuple(first_comp_of_product), snd_comp_of_product))
+
+    return result
+
+  return len(s_n(n))
+
+def test_advanced_simulation(n, k, d): 
+  all_sign_distros = WC(k, d) 
+  for distro in all_sign_distros: 
+    advanced_val = weak_composition_simulation(distro_of_signs=distro, n=n)
+    simple_val = compute_s_n_with_sign_distribution(distribution=distro, n=n)
+
+    if advanced_val == simple_val:
+      print("good")
+    else:
+      print("FAIL 👎")
+
+
+def simulation_speed():
+  N = 15
+  k = 4
+  d = 3
+
+  def compute_all_vals(f):
+    all_sign_distros = WC(k, d) 
+    for distro in loading_bar(all_sign_distros): 
+      f(distro_of_signs=distro, n=N)
+
+
+  simulations = [weak_composition_simulation, compute_s_n_with_sign_distribution]
+  for f in simulations: 
+    print(f"Testing speed of {f.__name__}")
+
+    start = time.perf_counter()
+    compute_all_vals(f)
+    end = time.perf_counter() 
+
+    time_taken = end - start 
+    print(f"{f.__name__} took {time_taken:.2f} seconds to compute value for {N=}")
+
+
 def main():
   # test_formula_all_one_many_vals(6, 6, 5)
+  # test_advanced_simulation(n=10, k=5, d=4)
+  simulation_speed()
   pass
 
 
