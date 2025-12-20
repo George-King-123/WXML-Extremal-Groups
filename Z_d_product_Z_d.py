@@ -132,6 +132,19 @@ def weak_composition_simulation_get_s_n(distro_of_signs, n):
 def weak_composition_simulation_size_s_n(distro_of_signs, n):
   return len(weak_composition_simulation_get_s_n(distro_of_signs=distro_of_signs, n=n))
 
+# just tests that weak_composition_simulation is actually correct
+def test_wc_sim(n, k, d): 
+  all_sign_distros = WC(k, d) 
+  for distro in loading_bar(all_sign_distros): 
+    advanced_val = weak_composition_simulation_size_s_n(distro_of_signs=distro, n=n)
+    simple_val = compute_s_n_with_sign_distribution(distro_of_signs=distro, n=n)
+
+    if advanced_val != simple_val:
+      print("FAIL")
+      return
+  
+  print("all good")
+
 
 def gamma_zd(n, k, d, noisy = False): 
   maximizing_distros = []
@@ -153,43 +166,43 @@ def gamma_zd(n, k, d, noisy = False):
 
   return best_value, maximizing_distros
 
-def test_conjecture(n, k, d): 
-  have_failed = False 
+def test_conjecture_many_vals(maxN, maxK, maxD): 
+  def test_conjecture(n, k, d): 
+    have_failed = False 
 
-  all_distros = WC(k, d) 
-  for distro in all_distros:
-    s_n = weak_composition_simulation_get_s_n(distro_of_signs=distro, n=n)
+    all_distros = WC(k, d) 
+    for distro in all_distros:
+      s_n = weak_composition_simulation_get_s_n(distro_of_signs=distro, n=n)
 
-    good_sign = min(
-      (i for i in range(1, d) if gcd(i, d) == 1 and distro[i] != 0),
-      default= -1 
-    )
-
-    if good_sign == -1: 
-      continue
-    
-    elt_with_good_sign = sum(distro[:good_sign])
-
-    def get_non_determined_bits(t):
-      res = tuple(
-        list(t[:((d*elt_with_good_sign) + 1)]) + \
-        list(t[d*(elt_with_good_sign +1):])
+      good_sign = min(
+        (i for i in range(1, d) if gcd(i, d) == 1 and distro[i] != 0),
+        default= -1 
       )
 
-      assert len(res) == d * (k-1) + 1, f"{len(res)=} {d*(k-1)+1=}"
-      return res
+      if good_sign == -1: 
+        continue
+      
+      elt_with_good_sign = sum(distro[:good_sign])
+
+      def get_non_determined_bits(t):
+        res = tuple(
+          list(t[:((d*elt_with_good_sign) + 1)]) + \
+          list(t[d*(elt_with_good_sign +1):])
+        )
+
+        assert len(res) == d * (k-1) + 1, f"{len(res)=} {d*(k-1)+1=}"
+        return res
 
 
-    set_of_first_kd_1_cmps = { get_non_determined_bits(t) for t, _ in s_n } 
+      set_of_first_kd_1_cmps = { get_non_determined_bits(t) for t, _ in s_n } 
 
-    if len(s_n) != len(set_of_first_kd_1_cmps):
-      print(f"FAIL on {n=} {k=} {d=} {distro=}") 
-      have_failed = True
+      if len(s_n) != len(set_of_first_kd_1_cmps):
+        print(f"FAIL on {n=} {k=} {d=} {distro=}") 
+        have_failed = True
 
-  print(f"conjecture is {not have_failed} for {n=} {k=} {d=}")
-  return not have_failed
-
-def test_conjecture_many_vals(maxN, maxK, maxD): 
+    print(f"conjecture is {not have_failed} for {n=} {k=} {d=}")
+    return not have_failed
+  
   have_failed = False
   for d in loading_bar(incl_range(2, maxD)): 
     for k in incl_range(1, maxK): 
@@ -199,19 +212,12 @@ def test_conjecture_many_vals(maxN, maxK, maxD):
   
   return not have_failed
 
-def test_wc_sim(n, k, d): 
-  all_sign_distros = WC(k, d) 
-  for distro in loading_bar(all_sign_distros): 
-    advanced_val = weak_composition_simulation_size_s_n(distro_of_signs=distro, n=n)
-    simple_val = compute_s_n_with_sign_distribution(distro_of_signs=distro, n=n)
-
-    if advanced_val != simple_val:
-      print("FAIL")
-      return
-  
-  print("all good")
 
 
+
+# Output: 
+# weak_composition_simulation_size_s_n took 9.75 seconds to compute value for N=15
+# compute_s_n_with_sign_distribution took 19.20 seconds to compute value for N=15
 def simulation_speed():
   N = 15
   k = 4
@@ -235,18 +241,26 @@ def simulation_speed():
     print(f"{f.__name__} took {time_taken:.2f} seconds to compute value for {N=}")
 
 
+def test_all_you_need_is_one_many_values(nmax, kmax, dmax): 
+  # returns true iff \gamma(k, n) = \max_{p \in [k]} |S_{p, k, n}^n|
+  def all_you_need_is_one(n, k, d):
+    best_formula_val = max(formula_when_all_zero_one_in_snd_comp(n=n, k=k, d=d, p=p) for p in incl_range(0, k))
+    gamma, _ = gamma_zd(n=n, k=k, d=d) 
+
+    return best_formula_val == gamma
+
+  for n in loading_bar(incl_range(1, nmax)):
+    for k in incl_range(1, kmax):
+      for d in incl_range(2, dmax): 
+        assert all_you_need_is_one(n=n, k=k, d=d)
+
+  
 
 
 def main():
   # test_formula_all_one_many_vals(6, 6, 5)
-  # test_wc_sim(n=10, k=5, d=4)
-  # simulation_speed()
-  # weak_composition_simulation((5, 1, 0, 0), 7)
-  # gamma_zd(n=5, k=4, d=5)
-  # if test_conjecture_many_vals(maxN=8, maxK=8, maxD=8):
-    # print("all good")
-  test_conjecture(n=7, k=5, d=12)
-  # test_conjecture2(maxN=6, maxK=6, maxD=5)
+  test_all_you_need_is_one_many_values(10, 10, 5)
+  # test_conjecture(n=7, k=5, d=12)
   pass
 
 
