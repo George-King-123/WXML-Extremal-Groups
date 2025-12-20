@@ -2,10 +2,10 @@
 
 from shared_code import get_sparse_d_tuple, compute_Sn, incl_range, WC, format_large_num
 from group_operations import op_Z_d_Z_d
-from math import comb, ceil, floor, factorial
+from math import comb, ceil, floor, factorial, gcd
 from tqdm import tqdm as loading_bar 
 import time
-from collections import defaultdict
+
 
 # generates a set S \subset Z^d product Z_d with |S| = k,
 # where the number of elements with i in the second component is distro_of_signs[i]
@@ -101,8 +101,7 @@ def find_maximizing_t_val(n, k, d):
     
     return maximizers
 
-
-def weak_composition_simulation(distro_of_signs, n):
+def weak_composition_simulation_get_s_n(distro_of_signs, n):
   d = len(distro_of_signs)
   k = sum(distro_of_signs)
 
@@ -126,20 +125,13 @@ def weak_composition_simulation(distro_of_signs, n):
         result.add((tuple(first_comp_of_product), snd_comp_of_product))
 
     return result
-  
-  s_n = get_s_n(n) 
 
-  first_kd_1 = defaultdict(int)
-  for t, _ in s_n: 
-    first_kd_1[t[:d * (k-1) + 1]] += 1
-
-  M = max(first_kd_1.values()) 
-  if M > 1:
-    print(M)
-    print(distro_of_signs)
+  return get_s_n(n)
 
 
-  return len(s_n)
+def weak_composition_simulation_size_s_n(distro_of_signs, n):
+  return len(weak_composition_simulation_get_s_n(distro_of_signs=distro_of_signs, n=n))
+
 
 def gamma_zd(n, k, d, noisy = False): 
   maximizing_distros = []
@@ -147,7 +139,7 @@ def gamma_zd(n, k, d, noisy = False):
 
   all_sign_distros = WC(k, d) 
   for distro in all_sign_distros: 
-    size_s_n = weak_composition_simulation(distro_of_signs=distro, n=n)
+    size_s_n = weak_composition_simulation_size_s_n(distro_of_signs=distro, n=n)
 
     if size_s_n > best_value: 
       best_value = size_s_n 
@@ -161,40 +153,56 @@ def gamma_zd(n, k, d, noisy = False):
 
   return best_value, maximizing_distros
 
-def test_conjecture(maxN, maxK, maxD): 
-  def test_conjecture_one_val(n, k, d): 
-    best_value, maximizing_distros = gamma_zd(n=n, k=k, d=d)
-    return any(
-      distro[0] + distro[1] == k for distro in maximizing_distros
+def test_conjecture(n, k, d): 
+  have_failed = False 
+
+  all_distros = WC(k, d) 
+  for distro in all_distros:
+    s_n = weak_composition_simulation_get_s_n(distro_of_signs=distro, n=n)
+
+    good_sign = min(
+      (i for i in range(1, d) if gcd(i, d) == 1 and distro[i] != 0),
+      default= -1 
     )
 
-  for n in incl_range(1, maxN): 
+    if good_sign == -1: 
+      continue
+    
+    elt_with_good_sign = sum(distro[:good_sign])
+
+    def get_non_determined_bits(t):
+      res = tuple(
+        list(t[:((d*elt_with_good_sign) + 1)]) + \
+        list(t[d*(elt_with_good_sign +1):])
+      )
+
+      assert len(res) == d * (k-1) + 1, f"{len(res)=} {d*(k-1)+1=}"
+      return res
+
+
+    set_of_first_kd_1_cmps = { get_non_determined_bits(t) for t, _ in s_n } 
+
+    if len(s_n) != len(set_of_first_kd_1_cmps):
+      print(f"FAIL on {n=} {k=} {d=} {distro=}") 
+      have_failed = True
+
+  print(f"conjecture is {not have_failed} for {n=} {k=} {d=}")
+  return not have_failed
+
+def test_conjecture_many_vals(maxN, maxK, maxD): 
+  have_failed = False
+  for d in loading_bar(incl_range(2, maxD)): 
     for k in incl_range(1, maxK): 
-      for d in incl_range(2, maxD): 
-        print(test_conjecture_one_val(n=n, k=k, d=d))
-
-def test_conjecture2(maxN, maxK, maxD): 
-  def test_conjecture_one_val(n, k, d): 
-    all_distros = WC(k, d)
-    for distro in all_distros: 
-      if distro[0] + distro[1] != k: 
-        val_of_distro = weak_composition_simulation(distro_of_signs=distro, n=n)
-
-        modified_distro = tuple([distro[0], k-distro[0]] + [0] * (d-2))
-        val_of_modified_distro = weak_composition_simulation(distro_of_signs=modified_distro, n=n)
-
-        if val_of_modified_distro < val_of_distro and distro[0] != 0:
-          print(f"conjecture FAILS on {distro}. {val_of_distro=} {val_of_modified_distro=}")
-
-  for n in loading_bar(incl_range(1, maxN)): 
-    for k in incl_range(1, maxK): 
-      for d in incl_range(2, maxD): 
-        test_conjecture_one_val(n=n, k=k, d=d)
+      for n in incl_range(1, maxN): 
+        if not test_conjecture(n=n, k=k, d=d): 
+          have_failed = True
+  
+  return not have_failed
 
 def test_wc_sim(n, k, d): 
   all_sign_distros = WC(k, d) 
   for distro in loading_bar(all_sign_distros): 
-    advanced_val = weak_composition_simulation(distro_of_signs=distro, n=n)
+    advanced_val = weak_composition_simulation_size_s_n(distro_of_signs=distro, n=n)
     simple_val = compute_s_n_with_sign_distribution(distro_of_signs=distro, n=n)
 
     if advanced_val != simple_val:
@@ -215,7 +223,7 @@ def simulation_speed():
       f(distro_of_signs=distro, n=N)
 
 
-  simulations = [weak_composition_simulation, compute_s_n_with_sign_distribution]
+  simulations = [weak_composition_simulation_size_s_n, compute_s_n_with_sign_distribution]
   for f in simulations: 
     print(f"Testing speed of {f.__name__}")
 
@@ -234,7 +242,10 @@ def main():
   # test_wc_sim(n=10, k=5, d=4)
   # simulation_speed()
   # weak_composition_simulation((5, 1, 0, 0), 7)
-  gamma_zd(n=5, k=4, d=5)
+  # gamma_zd(n=5, k=4, d=5)
+  # if test_conjecture_many_vals(maxN=8, maxK=8, maxD=8):
+    # print("all good")
+  test_conjecture(n=7, k=5, d=12)
   # test_conjecture2(maxN=6, maxK=6, maxD=5)
   pass
 
